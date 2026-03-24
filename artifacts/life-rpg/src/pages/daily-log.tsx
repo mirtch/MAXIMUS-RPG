@@ -58,7 +58,7 @@ interface OneTimeActivity {
 export default function DailyLogPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { data: todayLog, isLoading: isLogLoading, isError: isLogError } = useGetTodayLog({ query: { retry: false } });
+  const { data: todayLog, isLoading: isLogLoading, isError: isLogError } = useGetTodayLog({ query: { retry: false } as any });
   const { data: activities, isLoading: isActivitiesLoading } = useGetActivities();
   const submitMutation = useSubmitDailyLog();
   const createActivityMutation = useCreateActivity();
