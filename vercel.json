@@ -1,0 +1,14 @@
+{
+  "buildCommand": "node build-vercel-api.mjs && PORT=5173 BASE_PATH=\"/\" pnpm --filter @workspace/life-rpg run build",
+  "outputDirectory": "artifacts/life-rpg/dist/public",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "functions": {
+    "api/index.mjs": {
+      "includeFiles": "api/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" }
+  ]
+}
