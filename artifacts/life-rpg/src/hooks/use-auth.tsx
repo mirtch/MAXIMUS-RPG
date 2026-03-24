@@ -27,6 +27,8 @@ interface RegisterData {
   profilePicture?: string;
   characterName?: string;
   characterClass?: string;
+  selectedActivities?: string[];
+  customActivities?: { displayName: string; category: string }[];
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);

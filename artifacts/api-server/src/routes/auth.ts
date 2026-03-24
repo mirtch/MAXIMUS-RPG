@@ -10,7 +10,7 @@ const router: IRouter = Router();
 
 // POST /api/auth/register
 router.post("/auth/register", async (req, res): Promise<void> => {
-  const { username, password, displayName, avatar, profilePicture, characterName, characterClass } = req.body;
+  const { username, password, displayName, avatar, profilePicture, characterName, characterClass, selectedActivities, customActivities } = req.body;
 
   if (!username || !password) {
     res.status(400).json({ error: "Username and password are required" });
@@ -68,12 +68,78 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     });
   }
 
-  // Seed core activities for the new user
-  for (const activity of CORE_ACTIVITIES) {
-    await db.insert(activitiesTable).values({ ...activity, userId: user.id });
+  // Seed activities — only selected ones from the catalog, plus any custom
+  const selectedSet = new Set<string>(Array.isArray(selectedActivities) ? selectedActivities : []);
+
+  // XP reward defaults by category
+  const CATEGORY_XP: Record<string, Array<{ statName: string; amount: number }>> = {
+    fitness: [{ statName: "strength", amount: 35 }, { statName: "stamina", amount: 15 }],
+    athletics: [{ statName: "athletics", amount: 40 }, { statName: "stamina", amount: 15 }],
+    intellect: [{ statName: "intellect", amount: 35 }, { statName: "focus", amount: 15 }],
+    focus: [{ statName: "focus", amount: 35 }, { statName: "discipline", amount: 15 }],
+    creativity: [{ statName: "creativity", amount: 35 }, { statName: "focus", amount: 15 }],
+    discipline: [{ statName: "discipline", amount: 25 }, { statName: "health", amount: 10 }],
+    social: [{ statName: "charisma", amount: 25 }],
+    health: [{ statName: "health", amount: 15 }],
+    bad_habit: [{ statName: "health", amount: -20 }, { statName: "discipline", amount: -10 }],
+  };
+
+  if (selectedSet.size > 0) {
+    // Seed only selected core activities
+    for (const activity of CORE_ACTIVITIES) {
+      if (selectedSet.has(activity.name)) {
+        await db.insert(activitiesTable).values({ ...activity, userId: user.id });
+      }
+    }
+
+    // Also seed catalog activities not in CORE_ACTIVITIES (new ones we added to the catalog)
+    const coreNames = new Set(CORE_ACTIVITIES.map(a => a.name));
+    for (const name of selectedSet) {
+      if (!coreNames.has(name)) {
+        // This is a catalog activity not in the seed file — create it
+        const xpRewards = CATEGORY_XP["fitness"]; // default
+        await db.insert(activitiesTable).values({
+          userId: user.id,
+          name,
+          displayName: name.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase()).trim(),
+          description: `${name} activity`,
+          category: "fitness",
+          xpRewards,
+          isCore: true,
+          isReusable: true,
+          archived: false,
+          sortOrder: 50,
+        });
+      }
+    }
+  } else {
+    // No selection — seed all core activities (fallback)
+    for (const activity of CORE_ACTIVITIES) {
+      await db.insert(activitiesTable).values({ ...activity, userId: user.id });
+    }
   }
 
-  // Seed default streaks for the new user
+  // Seed custom activities from registration
+  if (Array.isArray(customActivities)) {
+    for (const ca of customActivities) {
+      if (!ca.displayName) continue;
+      const xpRewards = CATEGORY_XP[ca.category] || CATEGORY_XP["fitness"];
+      await db.insert(activitiesTable).values({
+        userId: user.id,
+        name: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        displayName: ca.displayName,
+        description: ca.displayName,
+        category: ca.category,
+        xpRewards,
+        isCore: true,
+        isReusable: true,
+        archived: false,
+        sortOrder: 50,
+      });
+    }
+  }
+
+  // Seed default streaks (always — these track consistency regardless of activity choice)
   const defaultStreaks = [
     { name: "gym", displayName: "Gym Streak" },
     { name: "running", displayName: "Running Streak" },
