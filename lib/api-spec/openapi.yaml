@@ -127,6 +127,55 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Activity"
+    post:
+      operationId: createActivity
+      tags: [activities]
+      summary: Create a custom activity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateActivityBody"
+      responses:
+        "201":
+          description: Created activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+
+  /activities/{id}:
+    delete:
+      operationId: deleteActivity
+      tags: [activities]
+      summary: Archive a custom activity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Archived activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+
+  /activities/seed:
+    post:
+      operationId: seedActivities
+      tags: [activities]
+      summary: Seed core activities (idempotent)
+      responses:
+        "200":
+          description: Seed result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeedActivitiesResult"
 
   /daily-log:
     get:
@@ -565,19 +614,28 @@ components:
           type: integer
         name:
           type: string
+        displayName:
+          type: string
         description:
           type: string
-        xpGains:
-          type: array
-          items:
-            $ref: "#/components/schemas/XpGain"
-        xpLosses:
-          type: array
-          items:
-            $ref: "#/components/schemas/XpGain"
         category:
           type: string
-      required: [id, name, description, xpGains, xpLosses, category]
+        xpRewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/XpReward"
+        isCore:
+          type: boolean
+        isReusable:
+          type: boolean
+        archived:
+          type: boolean
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, displayName, description, category, xpRewards, isCore, isReusable, archived, sortOrder, createdAt]
 
     XpGain:
       type: object
@@ -588,6 +646,62 @@ components:
           type: integer
       required: [statName, amount]
 
+    XpReward:
+      type: object
+      properties:
+        statName:
+          type: string
+        amount:
+          type: integer
+      required: [statName, amount]
+
+    CreateActivityBody:
+      type: object
+      properties:
+        name:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        xpRewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/XpReward"
+        isReusable:
+          type: boolean
+      required: [name, displayName, description, category, xpRewards]
+
+    OneTimeActivity:
+      type: object
+      properties:
+        displayName:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        xpRewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/XpReward"
+      required: [displayName, description, category, xpRewards]
+
+    SeedActivitiesResult:
+      type: object
+      properties:
+        seeded:
+          type: integer
+        total:
+          type: integer
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+      required: [seeded, total, activities]
+
     DailyLog:
       type: object
       properties:
@@ -596,10 +710,18 @@ components:
         date:
           type: string
           format: date-time
+        completedActivityIds:
+          type: array
+          items:
+            type: integer
         activities:
           type: array
           items:
             type: string
+        sleepHours:
+          type: ["integer", "null"]
+        phoneHours:
+          type: ["integer", "null"]
         totalXpGained:
           type: integer
         totalXpLost:
@@ -629,7 +751,7 @@ components:
         createdAt:
           type: string
           format: date-time
-      required: [id, date, activities, totalXpGained, totalXpLost, xpChanges, newLevelUps, streaksUpdated, rewardsEarned, punishmentsAssigned, createdAt]
+      required: [id, date, completedActivityIds, activities, totalXpGained, totalXpLost, xpChanges, newLevelUps, streaksUpdated, rewardsEarned, punishmentsAssigned, createdAt]
 
     XpChange:
       type: object
@@ -656,42 +778,23 @@ components:
     SubmitDailyLogBody:
       type: object
       properties:
-        activities:
+        completedActivityIds:
           type: array
           items:
-            type: string
-          description: List of activity names done today
-        notes:
-          type: ["string", "null"]
-        gymDone:
-          type: boolean
-        runningDone:
-          type: boolean
-        basketballDone:
-          type: boolean
-        studyDone:
-          type: boolean
-        deepWorkDone:
-          type: boolean
-        pianoDone:
-          type: boolean
+            type: integer
+          description: IDs of activities completed today
         sleepHours:
           type: number
-        ateJunkFood:
-          type: boolean
         phoneHours:
           type: number
-        socializedToday:
-          type: boolean
-        plannedDay:
-          type: boolean
-        coldShower:
-          type: boolean
-        meditatedToday:
-          type: boolean
-        drankWater:
-          type: boolean
-      required: [activities]
+        notes:
+          type: ["string", "null"]
+        oneTimeActivities:
+          type: array
+          items:
+            $ref: "#/components/schemas/OneTimeActivity"
+          description: Custom one-time activities to log
+      required: [completedActivityIds]
 
     DailyLogResult:
       type: object
