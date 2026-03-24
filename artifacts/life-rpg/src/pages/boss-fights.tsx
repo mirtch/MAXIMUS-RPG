@@ -64,7 +64,7 @@ export default function BossFightsPage() {
   const handleCompleteSubmit = (data: any) => {
     if (!selectedBossId) return;
     completeMutation.mutate({
-      bossId: selectedBossId,
+      id: selectedBossId,
       data: {
         result: data.result as "victory" | "defeat" | "draw",
         xpEarned: Number(data.xpEarned)
