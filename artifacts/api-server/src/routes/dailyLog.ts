@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, desc } from "drizzle-orm";
-import { db, dailyLogTable, statsTable, characterTable, achievementsTable, rewardsTable, punishmentsTable, streaksTable } from "@workspace/db";
+import { eq, desc, inArray } from "drizzle-orm";
+import { db, dailyLogTable, statsTable, characterTable, streaksTable, activitiesTable } from "@workspace/db";
 import { getLevelFromXp, getTitleForLevel, getOverallTitleFromLevel, calculateXpChanges, type DailyLogInput } from "../lib/rpg.js";
 
 const router: IRouter = Router();
@@ -23,7 +23,7 @@ router.get("/daily-log", async (req, res): Promise<void> => {
   res.json(logs);
 });
 
-router.get("/daily-log/today", async (req, res): Promise<void> => {
+router.get("/daily-log/today", async (_req, res): Promise<void> => {
   const now = new Date();
   const todayStart = startOfDay(now);
   const todayEnd = endOfDay(now);
@@ -44,11 +44,43 @@ router.get("/daily-log/today", async (req, res): Promise<void> => {
 
 router.post("/daily-log", async (req, res): Promise<void> => {
   const input: DailyLogInput = req.body;
-  const xpChanges = calculateXpChanges(input);
+  const allActivityIds = [...(input.completedActivityIds || [])];
 
+  // Handle one-time custom activities: insert them, collect their IDs
+  if (input.oneTimeActivities && input.oneTimeActivities.length > 0) {
+    for (const ota of input.oneTimeActivities) {
+      const [created] = await db.insert(activitiesTable).values({
+        name: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        displayName: ota.displayName,
+        description: ota.description,
+        category: ota.category,
+        xpRewards: ota.xpRewards,
+        isCore: false,
+        isReusable: false,
+        archived: false,
+        sortOrder: 99,
+      }).returning();
+      allActivityIds.push(created.id);
+    }
+  }
+
+  // Fetch activity definitions for XP calculation
+  const activityDefs = allActivityIds.length > 0
+    ? await db.select().from(activitiesTable).where(inArray(activitiesTable.id, allActivityIds))
+    : [];
+
+  const xpChanges = calculateXpChanges(
+    { ...input, completedActivityIds: allActivityIds },
+    activityDefs.map(a => ({
+      id: a.id,
+      name: a.displayName,
+      xpRewards: a.xpRewards as Array<{ statName: string; amount: number }>,
+    })),
+  );
+
+  // Update stats
   const levelUps: Array<{ statName: string; newLevel: number; newTitle: string }> = [];
   const statUpdates: Record<string, { oldLevel: number; newXp: number; newLevel: number; newTitle: string }> = {};
-
   const allStats = await db.select().from(statsTable);
 
   for (const change of xpChanges) {
@@ -75,6 +107,7 @@ router.post("/daily-log", async (req, res): Promise<void> => {
     }
   }
 
+  // Update overall character
   const updatedStats = await db.select().from(statsTable);
   const totalXp = updatedStats.reduce((sum, s) => sum + s.xp, 0);
   const overallLevel = Math.max(1, Math.floor(totalXp / 200) + 1);
@@ -87,33 +120,33 @@ router.post("/daily-log", async (req, res): Promise<void> => {
       .where(eq(characterTable.id, character.id));
   }
 
+  // Update streaks — map activity names to streak names
   const streaksUpdated: string[] = [];
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  const streakMappings: Array<{ key: string; streakName: string }> = [
-    { key: "gymDone", streakName: "gym" },
-    { key: "runningDone", streakName: "running" },
-    { key: "pianoDone", streakName: "piano" },
-    { key: "deepWorkDone", streakName: "deep_work" },
-    { key: "plannedDay", streakName: "planned_day" },
+  const completedActivityNames = new Set(activityDefs.map(a => a.name));
+
+  const streakMappings: Array<{ activityName: string; streakName: string }> = [
+    { activityName: "gym", streakName: "gym" },
+    { activityName: "running", streakName: "running" },
+    { activityName: "piano", streakName: "piano" },
+    { activityName: "deepWork", streakName: "deep_work" },
+    { activityName: "plannedDay", streakName: "planned_day" },
   ];
 
   for (const mapping of streakMappings) {
-    if ((input as Record<string, unknown>)[mapping.key]) {
+    if (completedActivityNames.has(mapping.activityName)) {
       const [streak] = await db.select().from(streaksTable).where(eq(streaksTable.name, mapping.streakName));
       if (streak) {
         const lastDate = streak.lastActivityDate ? new Date(streak.lastActivityDate) : null;
         let newStreak = streak.currentStreak;
 
         if (lastDate) {
-          const lastDateDay = new Date(lastDate);
-          lastDateDay.setHours(0, 0, 0, 0);
-          const yesterdayDay = new Date(yesterday);
-          yesterdayDay.setHours(0, 0, 0, 0);
-          const todayDay = new Date(today);
-          todayDay.setHours(0, 0, 0, 0);
+          const lastDateDay = startOfDay(lastDate);
+          const yesterdayDay = startOfDay(yesterday);
+          const todayDay = startOfDay(today);
 
           if (lastDateDay.getTime() === yesterdayDay.getTime()) {
             newStreak = streak.currentStreak + 1;
@@ -136,6 +169,7 @@ router.post("/daily-log", async (req, res): Promise<void> => {
     }
   }
 
+  // Sleep streak
   if (input.sleepHours !== undefined && input.sleepHours >= 8) {
     const [sleepStreak] = await db.select().from(streaksTable).where(eq(streaksTable.name, "sleep_8h"));
     if (sleepStreak) {
@@ -155,63 +189,35 @@ router.post("/daily-log", async (req, res): Promise<void> => {
     }
   }
 
-  const punishmentsAssigned: string[] = [];
-  const rewardsEarned: string[] = [];
-
-  const newAchievements: any[] = [];
-  const earnedRewards: any[] = [];
-  const assignedPunishments: any[] = [];
+  // Build activity name snapshot for history
+  const activityNames = activityDefs.map(a => a.displayName);
 
   const totalXpGained = xpChanges.filter(c => c.amount > 0).reduce((sum, c) => sum + c.amount, 0);
   const totalXpLost = Math.abs(xpChanges.filter(c => c.amount < 0).reduce((sum, c) => sum + c.amount, 0));
 
-  const activities: string[] = input.activities || [];
-  if (input.gymDone) activities.push("gym");
-  if (input.runningDone) activities.push("running");
-  if (input.basketballDone) activities.push("basketball");
-  if (input.studyDone) activities.push("study");
-  if (input.deepWorkDone) activities.push("deepWork");
-  if (input.pianoDone) activities.push("piano");
-  if (input.socializedToday) activities.push("socialized");
-  if (input.plannedDay) activities.push("plannedDay");
-  if (input.coldShower) activities.push("coldShower");
-  if (input.meditatedToday) activities.push("meditation");
-  if (input.drankWater) activities.push("drankWater");
-
   const [log] = await db.insert(dailyLogTable).values({
     date: today,
-    activities: [...new Set(activities)],
+    completedActivityIds: allActivityIds,
+    activities: activityNames,
+    sleepHours: input.sleepHours ?? null,
+    phoneHours: input.phoneHours ?? null,
     totalXpGained,
     totalXpLost,
-    xpChanges: xpChanges,
+    xpChanges,
     newLevelUps: levelUps,
     streaksUpdated,
-    rewardsEarned: rewardsEarned.map(r => r.name || r),
-    punishmentsAssigned: punishmentsAssigned.map(p => p.description || p),
+    rewardsEarned: [],
+    punishmentsAssigned: [],
     notes: input.notes ?? null,
-    gymDone: input.gymDone ?? false,
-    runningDone: input.runningDone ?? false,
-    basketballDone: input.basketballDone ?? false,
-    studyDone: input.studyDone ?? false,
-    deepWorkDone: input.deepWorkDone ?? false,
-    pianoDone: input.pianoDone ?? false,
-    sleepHours: input.sleepHours ?? null,
-    ateJunkFood: input.ateJunkFood ?? false,
-    phoneHours: input.phoneHours ?? null,
-    socializedToday: input.socializedToday ?? false,
-    plannedDay: input.plannedDay ?? false,
-    coldShower: input.coldShower ?? false,
-    meditatedToday: input.meditatedToday ?? false,
-    drankWater: input.drankWater ?? false,
   }).returning();
 
   res.status(201).json({
     log,
     xpChanges,
     levelUps,
-    newAchievements,
-    rewardsEarned: earnedRewards,
-    punishmentsAssigned: assignedPunishments,
+    newAchievements: [],
+    rewardsEarned: [],
+    punishmentsAssigned: [],
   });
 });
 
