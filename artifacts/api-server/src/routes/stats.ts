@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, statsTable, characterTable } from "@workspace/db";
-import { getLevelFromXp, getTitleForLevel, getOverallTitleFromLevel } from "../lib/rpg.js";
+import { getLevelFromXp, getTitleForLevel, getOverallTitleFromLevel, applyClassBonus } from "../lib/rpg.js";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();

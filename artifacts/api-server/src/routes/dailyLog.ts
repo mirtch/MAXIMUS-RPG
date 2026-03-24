@@ -72,6 +72,9 @@ router.post("/daily-log", requireAuth, async (req: AuthRequest, res): Promise<vo
     ? await db.select().from(activitiesTable).where(inArray(activitiesTable.id, allActivityIds))
     : [];
 
+  // Get character class for bonus calculation
+  const [char] = await db.select().from(characterTable).where(eq(characterTable.userId, userId)).limit(1);
+
   const xpChanges = calculateXpChanges(
     { ...input, completedActivityIds: allActivityIds },
     activityDefs.map(a => ({
@@ -79,6 +82,7 @@ router.post("/daily-log", requireAuth, async (req: AuthRequest, res): Promise<vo
       name: a.displayName,
       xpRewards: a.xpRewards as Array<{ statName: string; amount: number }>,
     })),
+    char?.class,
   );
 
   const levelUps: Array<{ statName: string; newLevel: number; newTitle: string }> = [];

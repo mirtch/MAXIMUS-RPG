@@ -89,6 +89,26 @@ export interface XpReward {
   amount: number;
 }
 
+// Class bonus multipliers — each class gets +10% to specific stats
+export const CLASS_BONUSES: Record<string, string[]> = {
+  Warrior: ["strength", "stamina", "discipline"],
+  Scholar: ["intellect", "focus", "creativity"],
+  Monk: ["focus", "discipline", "health"],
+  Ranger: ["stamina", "athletics", "health"],
+  Artisan: ["creativity", "charisma", "focus"],
+};
+
+export const CLASS_BONUS_MULTIPLIER = 1.1; // 10% bonus
+
+export function applyClassBonus(amount: number, statName: string, characterClass: string): number {
+  const bonusStats = CLASS_BONUSES[characterClass];
+  if (!bonusStats) return amount;
+  if (bonusStats.includes(statName)) {
+    return Math.round(amount * CLASS_BONUS_MULTIPLIER);
+  }
+  return amount;
+}
+
 export interface ActivityDef {
   id: number;
   name: string;
@@ -111,32 +131,38 @@ export interface DailyLogInput {
 export function calculateXpChanges(
   input: DailyLogInput,
   activityDefs: ActivityDef[],
+  characterClass?: string,
 ): XpChange[] {
   const changes: XpChange[] = [];
   const activityMap = new Map(activityDefs.map(a => [a.id, a]));
 
-  // XP from completed activities
+  // XP from completed activities (with class bonus)
   for (const actId of input.completedActivityIds) {
     const activity = activityMap.get(actId);
     if (!activity) continue;
     for (const reward of activity.xpRewards) {
+      const amount = characterClass ? applyClassBonus(reward.amount, reward.statName, characterClass) : reward.amount;
       changes.push({
         statName: reward.statName,
-        amount: reward.amount,
+        amount,
         reason: activity.name,
       });
     }
   }
 
+  // Helper to apply class bonus to positive XP only
+  const cb = (amount: number, stat: string) =>
+    amount > 0 && characterClass ? applyClassBonus(amount, stat, characterClass) : amount;
+
   // XP from sleep (metric-based thresholds)
   if (input.sleepHours !== undefined) {
     if (input.sleepHours >= 8) {
-      changes.push({ statName: "health", amount: 30, reason: "Great sleep (8h+)" });
-      changes.push({ statName: "focus", amount: 10, reason: "Well-rested focus" });
+      changes.push({ statName: "health", amount: cb(30, "health"), reason: "Great sleep (8h+)" });
+      changes.push({ statName: "focus", amount: cb(10, "focus"), reason: "Well-rested focus" });
     } else if (input.sleepHours >= 7) {
-      changes.push({ statName: "health", amount: 20, reason: "Good sleep (7h+)" });
+      changes.push({ statName: "health", amount: cb(20, "health"), reason: "Good sleep (7h+)" });
     } else if (input.sleepHours >= 6) {
-      changes.push({ statName: "health", amount: 5, reason: "Adequate sleep" });
+      changes.push({ statName: "health", amount: cb(5, "health"), reason: "Adequate sleep" });
     } else if (input.sleepHours <= 5) {
       changes.push({ statName: "health", amount: -30, reason: "Poor sleep (5h or less)" });
       changes.push({ statName: "focus", amount: -15, reason: "Sleep deprivation" });

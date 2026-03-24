@@ -9,11 +9,31 @@ import { Check, Plus, X } from "lucide-react";
 
 const AVATARS = ["⚔️", "🛡️", "🏹", "🧙", "🗡️", "🔮", "🐉", "🦅", "🐺", "🦁", "🔥", "⭐"];
 const CLASSES = [
-  { value: "Warrior", label: "Warrior", desc: "Discipline & fitness" },
-  { value: "Scholar", label: "Scholar", desc: "Knowledge & learning" },
-  { value: "Monk", label: "Monk", desc: "Mindfulness & balance" },
-  { value: "Ranger", label: "Ranger", desc: "Outdoor & adventure" },
-  { value: "Artisan", label: "Artisan", desc: "Creative & craft" },
+  {
+    value: "Warrior", label: "Warrior", icon: "⚔️",
+    desc: "Forged in iron and tempered by sweat, the Warrior walks the path of relentless discipline. Where others falter, you push forward — the battlefield is the gym, the arena, the cold morning run. Your body is your weapon, and every rep is a prayer to the gods of war.",
+    bonus: "+10% Strength, Stamina, Discipline",
+  },
+  {
+    value: "Scholar", label: "Scholar", icon: "📜",
+    desc: "Keeper of forbidden knowledge and seeker of hidden truths. The Scholar devours tomes, deciphers ancient patterns in code and mathematics, and bends the arcane forces of intellect to their will. Your mind is a fortress — every hour of deep study adds another stone to its walls.",
+    bonus: "+10% Intellect, Focus, Creativity",
+  },
+  {
+    value: "Monk", label: "Monk", icon: "🧘",
+    desc: "In the silence between heartbeats, the Monk finds infinite power. Trained in the monasteries of self-mastery, you have learned that true strength flows from stillness. Cold showers, meditation, and unwavering routine are your sacred rituals. The undisciplined mind is the only enemy you fear.",
+    bonus: "+10% Focus, Discipline, Health",
+  },
+  {
+    value: "Ranger", label: "Ranger", icon: "🏹",
+    desc: "Born under open skies and restless by nature, the Ranger roams where others dare not tread. Mountains, trails, and the wild unknown are your domain. Your endurance is legendary, your body hardened by wind and stone. You do not conquer nature — you become part of it.",
+    bonus: "+10% Stamina, Athletics, Health",
+  },
+  {
+    value: "Artisan", label: "Artisan", icon: "🎭",
+    desc: "The Artisan hears melodies in chaos and sees beauty in the mundane. With hands that sculpt, strings that sing, and words that cut deeper than any blade, you reshape reality itself. Your creations echo through the halls of legend — every masterpiece a spell cast upon the world.",
+    bonus: "+10% Creativity, Charisma, Focus",
+  },
 ];
 
 // Activity catalog organized by category
@@ -262,13 +282,18 @@ export default function AuthPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Choose Class</Label>
-                <div className="space-y-2">
+                <Label>Choose Your Path</Label>
+                <div className="space-y-3">
                   {CLASSES.map(c => (
                     <button key={c.value} type="button" onClick={() => setSelectedClass(c.value)}
-                      className={`w-full text-left p-3 rounded-lg border-2 transition-all ${selectedClass === c.value ? "border-primary bg-primary/10" : "border-border hover:border-muted-foreground"}`}>
-                      <div className="font-medium">{c.label}</div>
-                      <div className="text-sm text-muted-foreground">{c.desc}</div>
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedClass === c.value ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground"}`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">{c.icon}</span>
+                        <span className="font-bold text-lg">{c.label}</span>
+                        {selectedClass === c.value && <Check className="w-5 h-5 text-primary ml-auto" />}
+                      </div>
+                      <p className="text-sm text-muted-foreground italic leading-relaxed">{c.desc}</p>
+                      <div className="mt-2 text-xs font-semibold text-primary">{c.bonus}</div>
                     </button>
                   ))}
                 </div>
