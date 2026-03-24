@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, UserPlus, Trophy, Activity, Clock, Share2 } from "lucide-react";
+import { Users, UserPlus, Trophy, Activity, Clock, Share2, Flame, BarChart } from "lucide-react";
 
 interface Friend {
   id: number;
@@ -65,6 +65,9 @@ function feedLabel(type: string, data: any): string {
     case "group_quest_completed": return `completed group quest "${data.questTitle}" (+${data.xpEarned} XP)`;
     case "friend_joined": return "became friends with you!";
     case "streak_milestone": return `hit a ${data.days}-day streak on ${data.streakName}!`;
+    case "life_log": return `${data.label} "${data.title}"${data.subtitle ? ` by ${data.subtitle}` : ""}${data.rating ? ` (${"★".repeat(data.rating)})` : ""} +${data.xpAwarded} XP`;
+    case "challenge_completed": return `completed challenge "${data.challengeTitle}" — ${data.result} (+${data.xpEarned} XP)`;
+    case "challenge_won": return `won challenge "${data.challengeTitle}" (+${data.xpEarned} XP)`;
     default: return type;
   }
 }
@@ -81,11 +84,12 @@ function timeAgo(dateStr: string): string {
 
 export default function FriendsPage() {
   const { token } = useAuth();
-  const [tab, setTab] = useState<"friends" | "feed" | "leaderboard">("friends");
+  const [tab, setTab] = useState<"friends" | "feed" | "leaderboard" | "streaks" | "weekly">("friends");
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [feed, setFeed] = useState<FeedEntry[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [weeklyRecaps, setWeeklyRecaps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [addUsername, setAddUsername] = useState("");
   const [addStatus, setAddStatus] = useState("");
@@ -103,16 +107,18 @@ export default function FriendsPage() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [fRes, rRes, feedRes, lbRes] = await Promise.all([
+      const [fRes, rRes, feedRes, lbRes, wrRes] = await Promise.all([
         fetch("/api/friends", { headers }),
         fetch("/api/friends/requests", { headers }),
         fetch("/api/friends/feed", { headers }),
         fetch("/api/friends/leaderboard", { headers }),
+        fetch("/api/weekly-recap/friends", { headers }),
       ]);
       setFriends(await fRes.json());
       setRequests(await rRes.json());
       setFeed(await feedRes.json());
       setLeaderboard(await lbRes.json());
+      setWeeklyRecaps(await wrRes.json());
     } catch { /* ignore */ }
     setLoading(false);
   };
@@ -153,8 +159,8 @@ export default function FriendsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Social</h1>
-        <div className="flex gap-1">
-          {([["friends", "Friends", Users], ["feed", "Feed", Activity], ["leaderboard", "Ranks", Trophy]] as const).map(([key, label, Icon]) => (
+        <div className="flex gap-1 flex-wrap">
+          {([["friends", "Friends", Users], ["feed", "Feed", Activity], ["leaderboard", "Ranks", Trophy], ["streaks", "Streaks", Flame], ["weekly", "Weekly", BarChart]] as const).map(([key, label, Icon]) => (
             <Button key={key} variant={tab === key ? "default" : "outline"} size="sm" onClick={() => setTab(key)}>
               <Icon className="w-4 h-4 mr-1" />{label}
             </Button>
@@ -274,6 +280,64 @@ export default function FriendsPage() {
                 <div className="text-right">
                   <div className="font-bold text-primary">{entry.totalXp.toLocaleString()}</div>
                   <div className="text-xs text-muted-foreground">XP</div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {tab === "streaks" && (
+        <div className="space-y-2">
+          {friends.length === 0 ? (
+            <Card className="p-8 text-center text-muted-foreground">Add friends to compare streaks!</Card>
+          ) : (
+            <>
+              {/* Build streak rankings from friends + self */}
+              {(() => {
+                // We don't have streaks in the friends data yet, so show a message to check individual profiles
+                return (
+                  <Card className="p-6 text-center space-y-3">
+                    <Flame className="w-12 h-12 text-primary mx-auto" />
+                    <h3 className="font-bold text-lg">Streak Rankings</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Check the Streaks page to see your active streaks. Streak leaderboard coming soon with friend streak data!
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Tip: Maintain long streaks to climb the ranks. Your friends can see your streak milestones in the feed.
+                    </p>
+                  </Card>
+                );
+              })()}
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === "weekly" && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">This Week's Rankings</h3>
+          {weeklyRecaps.length === 0 ? (
+            <Card className="p-8 text-center text-muted-foreground">No data this week yet. Start logging activities!</Card>
+          ) : weeklyRecaps.map((recap: any, i: number) => (
+            <Card key={recap.userId} className={`p-4 ${recap.isYou ? "border-primary" : ""}`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${i === 0 ? "bg-yellow-500/20 text-yellow-500" : i === 1 ? "bg-gray-400/20 text-gray-400" : i === 2 ? "bg-amber-700/20 text-amber-700" : "bg-muted text-muted-foreground"}`}>
+                  #{i + 1}
+                </div>
+                <span className="text-xl">{recap.avatar}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold truncate">{recap.displayName}</span>
+                    {recap.isYou && <Badge variant="outline" className="text-xs">You</Badge>}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {recap.daysLogged} days logged · {recap.activitiesCompleted} activities
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-primary">+{recap.xpGained}</div>
+                  <div className="text-xs text-muted-foreground">XP this week</div>
                 </div>
               </div>
             </Card>

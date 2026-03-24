@@ -12,3 +12,5 @@ export * from "./activities";
 export * from "./friendships";
 export * from "./activityFeed";
 export * from "./parties";
+export * from "./lifeLog";
+export * from "./challenges";

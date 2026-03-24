@@ -28,6 +28,8 @@ import {
   HardDrive,
   Users,
   Shield,
+  BookOpen,
+  Target,
   LogOut,
 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
@@ -47,6 +49,8 @@ const navItems = [
   { name: "Punishments", path: "/punishments", icon: ShieldAlert },
   { name: "Achievements", path: "/achievements", icon: Trophy },
   { name: "Boss Fights", path: "/boss-fights", icon: Swords },
+  { name: "Life Log", path: "/life-log", icon: BookOpen },
+  { name: "Challenges", path: "/challenges", icon: Target },
   { name: "Friends", path: "/friends", icon: Users },
   { name: "Group Quests", path: "/group-quests", icon: Shield },
   { name: "Save Game", path: "/save-game", icon: HardDrive },

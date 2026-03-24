@@ -14,6 +14,9 @@ import bossFightsRouter from "./bossFights";
 import saveGameRouter from "./saveGame";
 import friendsRouter from "./friends";
 import groupQuestsRouter from "./groupQuests";
+import lifeLogRouter from "./lifeLog";
+import challengesRouter from "./challenges";
+import weeklyRecapRouter from "./weeklyRecap";
 
 const router: IRouter = Router();
 
@@ -35,5 +38,8 @@ router.use(bossFightsRouter);
 router.use(saveGameRouter);
 router.use(friendsRouter);
 router.use(groupQuestsRouter);
+router.use(lifeLogRouter);
+router.use(challengesRouter);
+router.use(weeklyRecapRouter);
 
 export default router;
