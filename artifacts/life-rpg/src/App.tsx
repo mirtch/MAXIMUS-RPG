@@ -15,6 +15,7 @@ import RewardsPage from "@/pages/rewards";
 import PunishmentsPage from "@/pages/punishments";
 import AchievementsPage from "@/pages/achievements";
 import BossFightsPage from "@/pages/boss-fights";
+import SaveGamePage from "@/pages/save-game";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/punishments" component={PunishmentsPage} />
       <Route path="/achievements" component={AchievementsPage} />
       <Route path="/boss-fights" component={BossFightsPage} />
+      <Route path="/save-game" component={SaveGamePage} />
       <Route component={NotFound} />
     </Switch>
   );

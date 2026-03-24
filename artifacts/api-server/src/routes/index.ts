@@ -10,6 +10,7 @@ import rewardsRouter from "./rewards";
 import punishmentsRouter from "./punishments";
 import achievementsRouter from "./achievements";
 import bossFightsRouter from "./bossFights";
+import saveGameRouter from "./saveGame";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(rewardsRouter);
 router.use(punishmentsRouter);
 router.use(achievementsRouter);
 router.use(bossFightsRouter);
+router.use(saveGameRouter);
 
 export default router;

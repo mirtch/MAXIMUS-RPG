@@ -23,7 +23,8 @@ import {
   Gift,
   ShieldAlert,
   Trophy,
-  Swords
+  Swords,
+  HardDrive
 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 
@@ -41,6 +42,7 @@ const navItems = [
   { name: "Punishments", path: "/punishments", icon: ShieldAlert },
   { name: "Achievements", path: "/achievements", icon: Trophy },
   { name: "Boss Fights", path: "/boss-fights", icon: Swords },
+  { name: "Save Game", path: "/save-game", icon: HardDrive },
 ];
 
 export function Layout({ children }: LayoutProps) {
