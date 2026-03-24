@@ -7,3 +7,4 @@ export * from "./rewards";
 export * from "./punishments";
 export * from "./achievements";
 export * from "./bossFights";
+export * from "./activities";
