@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Plus, X, Share2 } from "lucide-react";
 
 const AVATARS = ["⚔️", "🛡️", "🏹", "🧙", "🗡️", "🔮", "🐉", "🦅", "🐺", "🦁", "🔥", "⭐"];
 const CLASSES = [
@@ -95,6 +95,14 @@ export default function AuthPage() {
   const [step, setStep] = useState(1); // 1=credentials, 2=character, 3=activities
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shareApp = () => {
+    const text = `Join me on MAXIMUS RPG! Level up your real life.\n\nhttps://maximus-rpg.vercel.app\n\nTo install as an app on iPhone:\n1. Open the link in Safari\n2. Tap the Share button (square with arrow)\n3. Scroll down and tap "Add to Home Screen"\n4. Tap Add — done!`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   // Shared fields
   const [username, setUsername] = useState("");
@@ -192,7 +200,7 @@ export default function AuthPage() {
       <div className="w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold tracking-tight text-primary">MAXIMUS RPG</h1>
-          <p className="text-muted-foreground">Level up your real life</p>
+          <p className="text-muted-foreground">Level up your real life.</p>
         </div>
 
         {mode === "login" ? (
@@ -390,6 +398,14 @@ export default function AuthPage() {
             </form>
           </Card>
         )}
+
+        <button
+          onClick={shareApp}
+          className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors py-2"
+        >
+          <Share2 className="w-4 h-4" />
+          {copied ? "Copied! Send it to your friends." : "Share with friends (copies invite + install instructions)"}
+        </button>
       </div>
     </div>
   );

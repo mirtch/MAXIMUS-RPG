@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, UserPlus, Trophy, Activity, Clock } from "lucide-react";
+import { Users, UserPlus, Trophy, Activity, Clock, Share2 } from "lucide-react";
 
 interface Friend {
   id: number;
@@ -89,6 +89,14 @@ export default function FriendsPage() {
   const [loading, setLoading] = useState(true);
   const [addUsername, setAddUsername] = useState("");
   const [addStatus, setAddStatus] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const shareApp = () => {
+    const text = `Join me on MAXIMUS RPG! Level up your real life.\n\nhttps://maximus-rpg.vercel.app\n\nTo install as an app on iPhone:\n1. Open the link in Safari\n2. Tap the Share button (square with arrow)\n3. Scroll down and tap "Add to Home Screen"\n4. Tap Add — done!`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
@@ -161,6 +169,10 @@ export default function FriendsPage() {
           <Button onClick={sendRequest}><UserPlus className="w-4 h-4 mr-1" />Add</Button>
         </div>
         {addStatus && <p className="text-sm mt-2 text-muted-foreground">{addStatus}</p>}
+        <button onClick={shareApp} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mt-3">
+          <Share2 className="w-4 h-4" />
+          {copied ? "Copied! Send it to your friends." : "Invite friends (copies link + install instructions)"}
+        </button>
       </Card>
 
       {/* Pending Requests */}
