@@ -84,81 +84,51 @@ export interface XpChange {
   reason: string;
 }
 
-export interface DailyLogInput {
-  activities: string[];
-  notes?: string | null;
-  gymDone?: boolean;
-  runningDone?: boolean;
-  basketballDone?: boolean;
-  studyDone?: boolean;
-  deepWorkDone?: boolean;
-  pianoDone?: boolean;
-  sleepHours?: number;
-  ateJunkFood?: boolean;
-  phoneHours?: number;
-  socializedToday?: boolean;
-  plannedDay?: boolean;
-  coldShower?: boolean;
-  meditatedToday?: boolean;
-  drankWater?: boolean;
+export interface XpReward {
+  statName: string;
+  amount: number;
 }
 
-export function calculateXpChanges(input: DailyLogInput): XpChange[] {
+export interface ActivityDef {
+  id: number;
+  name: string;
+  xpRewards: XpReward[];
+}
+
+export interface DailyLogInput {
+  completedActivityIds: number[];
+  sleepHours?: number;
+  phoneHours?: number;
+  notes?: string | null;
+  oneTimeActivities?: Array<{
+    displayName: string;
+    description: string;
+    category: string;
+    xpRewards: XpReward[];
+  }>;
+}
+
+export function calculateXpChanges(
+  input: DailyLogInput,
+  activityDefs: ActivityDef[],
+): XpChange[] {
   const changes: XpChange[] = [];
+  const activityMap = new Map(activityDefs.map(a => [a.id, a]));
 
-  if (input.gymDone) {
-    changes.push({ statName: "strength", amount: 40, reason: "Gym workout" });
-    changes.push({ statName: "discipline", amount: 10, reason: "Gym consistency" });
+  // XP from completed activities
+  for (const actId of input.completedActivityIds) {
+    const activity = activityMap.get(actId);
+    if (!activity) continue;
+    for (const reward of activity.xpRewards) {
+      changes.push({
+        statName: reward.statName,
+        amount: reward.amount,
+        reason: activity.name,
+      });
+    }
   }
 
-  if (input.runningDone) {
-    changes.push({ statName: "stamina", amount: 30, reason: "Running / Cardio" });
-    changes.push({ statName: "health", amount: 10, reason: "Cardio for health" });
-  }
-
-  if (input.basketballDone) {
-    changes.push({ statName: "athletics", amount: 50, reason: "Basketball session" });
-    changes.push({ statName: "stamina", amount: 20, reason: "Basketball cardio" });
-    changes.push({ statName: "health", amount: -10, reason: "Physical fatigue" });
-  }
-
-  if (input.studyDone) {
-    changes.push({ statName: "intellect", amount: 35, reason: "Study session" });
-    changes.push({ statName: "focus", amount: 15, reason: "Deep study focus" });
-  }
-
-  if (input.deepWorkDone) {
-    changes.push({ statName: "focus", amount: 40, reason: "Deep work session" });
-    changes.push({ statName: "discipline", amount: 15, reason: "Deep work discipline" });
-  }
-
-  if (input.pianoDone) {
-    changes.push({ statName: "creativity", amount: 40, reason: "Piano practice" });
-    changes.push({ statName: "focus", amount: 20, reason: "Piano focus" });
-  }
-
-  if (input.socializedToday) {
-    changes.push({ statName: "charisma", amount: 25, reason: "Social interaction" });
-  }
-
-  if (input.plannedDay) {
-    changes.push({ statName: "discipline", amount: 20, reason: "Planned the day" });
-  }
-
-  if (input.coldShower) {
-    changes.push({ statName: "discipline", amount: 15, reason: "Cold shower" });
-    changes.push({ statName: "health", amount: 10, reason: "Cold shower health" });
-  }
-
-  if (input.meditatedToday) {
-    changes.push({ statName: "focus", amount: 20, reason: "Meditation" });
-    changes.push({ statName: "health", amount: 10, reason: "Mental health" });
-  }
-
-  if (input.drankWater) {
-    changes.push({ statName: "health", amount: 10, reason: "Stayed hydrated" });
-  }
-
+  // XP from sleep (metric-based thresholds)
   if (input.sleepHours !== undefined) {
     if (input.sleepHours >= 8) {
       changes.push({ statName: "health", amount: 30, reason: "Great sleep (8h+)" });
@@ -173,11 +143,7 @@ export function calculateXpChanges(input: DailyLogInput): XpChange[] {
     }
   }
 
-  if (input.ateJunkFood) {
-    changes.push({ statName: "health", amount: -20, reason: "Junk food" });
-    changes.push({ statName: "discipline", amount: -10, reason: "Lack of discipline" });
-  }
-
+  // XP from phone usage (metric-based thresholds)
   if (input.phoneHours !== undefined) {
     if (input.phoneHours >= 5) {
       changes.push({ statName: "focus", amount: -30, reason: "5+ hours on phone" });
