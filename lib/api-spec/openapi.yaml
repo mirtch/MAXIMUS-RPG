@@ -1,0 +1,971 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Life RPG API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: character
+    description: Character data
+  - name: stats
+    description: Stat management
+  - name: activities
+    description: Activity logging
+  - name: quests
+    description: Quest management
+  - name: streaks
+    description: Streak tracking
+  - name: rewards
+    description: Reward inventory
+  - name: punishments
+    description: Punishment tracking
+  - name: achievements
+    description: Achievement tracking
+  - name: bossFights
+    description: Boss fight events
+  - name: dailyLog
+    description: Daily logging and reporting
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /character:
+    get:
+      operationId: getCharacter
+      tags: [character]
+      summary: Get character data
+      responses:
+        "200":
+          description: Character data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Character"
+    patch:
+      operationId: updateCharacter
+      tags: [character]
+      summary: Update character
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCharacterBody"
+      responses:
+        "200":
+          description: Updated character
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Character"
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Get all stats
+      responses:
+        "200":
+          description: List of stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Stat"
+
+  /stats/{statName}/xp:
+    post:
+      operationId: addStatXp
+      tags: [stats]
+      summary: Add XP to a specific stat
+      parameters:
+        - name: statName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddXpBody"
+      responses:
+        "200":
+          description: Updated stat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stat"
+
+  /activities:
+    get:
+      operationId: getActivities
+      tags: [activities]
+      summary: Get activity definitions
+      responses:
+        "200":
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+
+  /daily-log:
+    get:
+      operationId: getDailyLogs
+      tags: [dailyLog]
+      summary: Get daily logs
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of daily logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyLog"
+    post:
+      operationId: submitDailyLog
+      tags: [dailyLog]
+      summary: Submit a daily log for today
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitDailyLogBody"
+      responses:
+        "201":
+          description: Daily log result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyLogResult"
+
+  /daily-log/today:
+    get:
+      operationId: getTodayLog
+      tags: [dailyLog]
+      summary: Get today's log if it exists
+      responses:
+        "200":
+          description: Today's log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyLog"
+        "404":
+          description: No log for today
+
+  /quests/daily:
+    get:
+      operationId: getDailyQuests
+      tags: [quests]
+      summary: Get today's daily quests
+      responses:
+        "200":
+          description: Daily quests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyQuest"
+
+  /quests/daily/{id}/complete:
+    post:
+      operationId: completeDailyQuest
+      tags: [quests]
+      summary: Mark a daily quest as complete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Completed quest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyQuest"
+
+  /quests/daily/generate:
+    post:
+      operationId: generateDailyQuests
+      tags: [quests]
+      summary: Generate new daily quests for today
+      responses:
+        "201":
+          description: Generated quests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyQuest"
+
+  /quests/side:
+    get:
+      operationId: getSideQuests
+      tags: [quests]
+      summary: Get all side quests
+      responses:
+        "200":
+          description: Side quests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SideQuest"
+    post:
+      operationId: createSideQuest
+      tags: [quests]
+      summary: Create a side quest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSideQuestBody"
+      responses:
+        "201":
+          description: Created side quest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SideQuest"
+
+  /quests/side/{id}/complete:
+    post:
+      operationId: completeSideQuest
+      tags: [quests]
+      summary: Complete a side quest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Completed side quest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SideQuest"
+
+  /quests/main:
+    get:
+      operationId: getMainQuests
+      tags: [quests]
+      summary: Get all main quests
+      responses:
+        "200":
+          description: Main quests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MainQuest"
+    post:
+      operationId: createMainQuest
+      tags: [quests]
+      summary: Create a main quest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMainQuestBody"
+      responses:
+        "201":
+          description: Created main quest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MainQuest"
+
+  /quests/main/{id}/complete:
+    post:
+      operationId: completeMainQuest
+      tags: [quests]
+      summary: Complete a main quest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Completed main quest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MainQuest"
+
+  /streaks:
+    get:
+      operationId: getStreaks
+      tags: [streaks]
+      summary: Get all streaks
+      responses:
+        "200":
+          description: List of streaks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Streak"
+
+  /rewards:
+    get:
+      operationId: getRewards
+      tags: [rewards]
+      summary: Get reward inventory
+      responses:
+        "200":
+          description: Rewards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reward"
+
+  /rewards/{id}/use:
+    post:
+      operationId: useReward
+      tags: [rewards]
+      summary: Use a reward from inventory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reward used
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reward"
+
+  /punishments:
+    get:
+      operationId: getPunishments
+      tags: [punishments]
+      summary: Get pending punishments
+      responses:
+        "200":
+          description: Punishments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Punishment"
+
+  /punishments/{id}/complete:
+    post:
+      operationId: completePunishment
+      tags: [punishments]
+      summary: Mark punishment as completed
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Completed punishment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Punishment"
+
+  /achievements:
+    get:
+      operationId: getAchievements
+      tags: [achievements]
+      summary: Get all achievements
+      responses:
+        "200":
+          description: Achievements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Achievement"
+
+  /boss-fights:
+    get:
+      operationId: getBossFights
+      tags: [bossFights]
+      summary: Get boss fights
+      responses:
+        "200":
+          description: Boss fights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BossFight"
+    post:
+      operationId: createBossFight
+      tags: [bossFights]
+      summary: Create a boss fight event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBossFightBody"
+      responses:
+        "201":
+          description: Created boss fight
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BossFight"
+
+  /boss-fights/{id}/complete:
+    post:
+      operationId: completeBossFight
+      tags: [bossFights]
+      summary: Complete a boss fight and award XP
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteBossFightBody"
+      responses:
+        "200":
+          description: Completed boss fight
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BossFight"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    Character:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        class:
+          type: string
+        overallLevel:
+          type: integer
+        totalXp:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, class, overallLevel, totalXp, title, createdAt, updatedAt]
+
+    UpdateCharacterBody:
+      type: object
+      properties:
+        name:
+          type: string
+        class:
+          type: string
+
+    Stat:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        displayName:
+          type: string
+        xp:
+          type: integer
+        level:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, displayName, xp, level, title, createdAt, updatedAt]
+
+    AddXpBody:
+      type: object
+      properties:
+        amount:
+          type: integer
+        reason:
+          type: string
+      required: [amount]
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        xpGains:
+          type: array
+          items:
+            $ref: "#/components/schemas/XpGain"
+        xpLosses:
+          type: array
+          items:
+            $ref: "#/components/schemas/XpGain"
+        category:
+          type: string
+      required: [id, name, description, xpGains, xpLosses, category]
+
+    XpGain:
+      type: object
+      properties:
+        statName:
+          type: string
+        amount:
+          type: integer
+      required: [statName, amount]
+
+    DailyLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date-time
+        activities:
+          type: array
+          items:
+            type: string
+        totalXpGained:
+          type: integer
+        totalXpLost:
+          type: integer
+        xpChanges:
+          type: array
+          items:
+            $ref: "#/components/schemas/XpChange"
+        newLevelUps:
+          type: array
+          items:
+            $ref: "#/components/schemas/LevelUp"
+        streaksUpdated:
+          type: array
+          items:
+            type: string
+        rewardsEarned:
+          type: array
+          items:
+            type: string
+        punishmentsAssigned:
+          type: array
+          items:
+            type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, date, activities, totalXpGained, totalXpLost, xpChanges, newLevelUps, streaksUpdated, rewardsEarned, punishmentsAssigned, createdAt]
+
+    XpChange:
+      type: object
+      properties:
+        statName:
+          type: string
+        amount:
+          type: integer
+        reason:
+          type: string
+      required: [statName, amount, reason]
+
+    LevelUp:
+      type: object
+      properties:
+        statName:
+          type: string
+        newLevel:
+          type: integer
+        newTitle:
+          type: string
+      required: [statName, newLevel, newTitle]
+
+    SubmitDailyLogBody:
+      type: object
+      properties:
+        activities:
+          type: array
+          items:
+            type: string
+          description: List of activity names done today
+        notes:
+          type: ["string", "null"]
+        gymDone:
+          type: boolean
+        runningDone:
+          type: boolean
+        basketballDone:
+          type: boolean
+        studyDone:
+          type: boolean
+        deepWorkDone:
+          type: boolean
+        pianoDone:
+          type: boolean
+        sleepHours:
+          type: number
+        ateJunkFood:
+          type: boolean
+        phoneHours:
+          type: number
+        socializedToday:
+          type: boolean
+        plannedDay:
+          type: boolean
+        coldShower:
+          type: boolean
+        meditatedToday:
+          type: boolean
+        drankWater:
+          type: boolean
+      required: [activities]
+
+    DailyLogResult:
+      type: object
+      properties:
+        log:
+          $ref: "#/components/schemas/DailyLog"
+        xpChanges:
+          type: array
+          items:
+            $ref: "#/components/schemas/XpChange"
+        levelUps:
+          type: array
+          items:
+            $ref: "#/components/schemas/LevelUp"
+        newAchievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Achievement"
+        rewardsEarned:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reward"
+        punishmentsAssigned:
+          type: array
+          items:
+            $ref: "#/components/schemas/Punishment"
+      required: [log, xpChanges, levelUps, newAchievements, rewardsEarned, punishmentsAssigned]
+
+    DailyQuest:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        xpReward:
+          type: integer
+        statReward:
+          type: string
+        completed:
+          type: boolean
+        date:
+          type: string
+          format: date-time
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, description, xpReward, statReward, completed, date, createdAt]
+
+    SideQuest:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        xpReward:
+          type: integer
+        statReward:
+          type: string
+        completed:
+          type: boolean
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, description, xpReward, statReward, completed, createdAt]
+
+    CreateSideQuestBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        xpReward:
+          type: integer
+        statReward:
+          type: string
+      required: [title, description, xpReward, statReward]
+
+    MainQuest:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        xpReward:
+          type: integer
+        completed:
+          type: boolean
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, description, xpReward, completed, createdAt]
+
+    CreateMainQuestBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        xpReward:
+          type: integer
+      required: [title, description, xpReward]
+
+    Streak:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        displayName:
+          type: string
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        lastActivityDate:
+          type: ["string", "null"]
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, displayName, currentStreak, longestStreak, updatedAt]
+
+    Reward:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        used:
+          type: boolean
+        usedAt:
+          type: ["string", "null"]
+          format: date-time
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, type, name, description, used, createdAt]
+
+    Punishment:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        xpPenalty:
+          type: integer
+        deadline:
+          type: ["string", "null"]
+          format: date-time
+        completed:
+          type: boolean
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, type, description, xpPenalty, completed, createdAt]
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        unlockedAt:
+          type: ["string", "null"]
+          format: date-time
+        unlocked:
+          type: boolean
+        requirement:
+          type: string
+        xpBonus:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, description, icon, unlocked, requirement, xpBonus, createdAt]
+
+    BossFight:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        eventType:
+          type: string
+        xpReward:
+          type: integer
+        statsInvolved:
+          type: array
+          items:
+            type: string
+        completed:
+          type: boolean
+        result:
+          type: ["string", "null"]
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        scheduledFor:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, description, eventType, xpReward, statsInvolved, completed, createdAt]
+
+    CreateBossFightBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        eventType:
+          type: string
+        xpReward:
+          type: integer
+        statsInvolved:
+          type: array
+          items:
+            type: string
+        scheduledFor:
+          type: ["string", "null"]
+          format: date-time
+      required: [name, description, eventType, xpReward, statsInvolved]
+
+    CompleteBossFightBody:
+      type: object
+      properties:
+        result:
+          type: string
+          enum: [victory, defeat, draw]
+        xpEarned:
+          type: integer
+      required: [result, xpEarned]

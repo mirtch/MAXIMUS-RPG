@@ -1,0 +1,396 @@
+PART 1 — The Life RPG System (Simple Explanation)
+
+1. The Idea
+
+You are turning your life into an RPG game.
+
+You are a character named MAXIMUS, class Prospect, and you gain XP (experience points) when you do good actions in real life, and lose XP when you do bad habits or skip important things.
+
+You level up in different stats, like in a video game.
+
+⸻
+
+2. The Stats
+
+You have 9 stats:
+
+Stat    What Increases It
+Strength    Gym, lifting weights
+Stamina    Running, cardio
+Athletics    Basketball, sprints, jumping
+Intellect    School, studying, reading, learning
+Focus    Deep work, no phone, studying
+Discipline    Planning, doing hard things, consistency
+Health    Sleep, good food, water
+Charisma    Socializing, talking to new people
+Creativity    Piano, music, creating things
+
+Each stat has:
+    •    XP
+    •    Level
+    •    Title (like Novice, Elite, Legend, etc.)
+
+There is also:
+    •    Overall Level (based on total XP from all stats)
+
+⸻
+
+3. XP System
+
+You gain XP when you do activities.
+
+Example:
+
+Activity    XP
+Gym 1h    +40 Strength
+Run 20 min    +30 Stamina
+Basketball 1h    +50 Athletics +20 Stamina
+Study 1h    +35 Intellect
+Deep focus 1h    +40 Focus
+Piano 1h    +40 Creativity +20 Focus
+Sleep 8h    +30 Health
+Talk to new person    +25 Charisma
+Plan your day    +20 Discipline
+
+You lose XP for bad habits:
+
+Bad Habit    XP Loss
+5h phone    -30 Focus
+Junk food    -20 Health
+Skip workout    -25 Discipline
+Sleep 5h    -30 Health
+Procrastinate all day    -40 Discipline
+
+Some actions give both:
+    •    Party: +Charisma, -Health, -Discipline
+    •    Basketball game: +Athletics, +Stamina, -Health (tired)
+
+⸻
+
+4. Levels and Titles
+
+Each stat has levels:
+
+Level    Title
+1    Novice
+2    Apprentice
+3    Adept
+4    Skilled
+5    Expert
+6    Elite
+7    Master
+8    Champion
+9    Legend
+10    Mythic
+11+    Special titles (Olympian, Genius, Iron Mind, Virtuoso, etc.)
+
+You never stop leveling.
+
+⸻
+
+5. Daily Quests
+
+Every day you get 3 daily quests.
+
+They are:
+    •    Simple
+    •    Specific
+    •    Outside your comfort zone
+
+Examples:
+    •    Cold shower
+    •    Talk to someone new
+    •    Stretch 15 min
+    •    Write 1 page
+    •    No phone 1h before sleep
+    •    Read 20 pages
+    •    Meditate 10 min
+    •    Compliment someone
+    •    Wake up before 9
+    •    Run 10 min
+
+Daily quests give bonus XP.
+
+You receive tomorrow’s quests the night before.
+
+⸻
+
+6. Side Quests (Medium Goals)
+
+These are objectives like in games.
+
+Current side quests:
+    •    Bench 150 lbs
+    •    Run 5km under 21 min
+    •    Touch rim consistently
+
+They give big XP when completed.
+
+⸻
+
+7. Main Quests (Huge Life Goals)
+
+These are long-term goals.
+
+Your current main quests:
+    1.    Make the cégep basketball team
+    2.    Finish Un Sospiro (piano piece)
+    3.    (Empty for now)
+
+These give huge XP, special titles, and big rewards.
+
+⸻
+
+8. Streak System ⚡
+
+If you repeat an action many days in a row, you get a streak.
+
+Examples:
+    •    Running streak
+    •    Gym streak
+    •    Piano streak
+    •    8h sleep streak
+    •    Deep work streak
+    •    Planned day streak
+
+Streaks give:
+    •    XP bonus
+    •    XP multiplier
+    •    Special rewards
+
+⸻
+
+9. Rewards (Very Important)
+
+Rewards are not just XP. They change the game.
+
+Examples:
+
+Reward    Effect
+2x XP    Double XP for a stat
+Junk Food Pass    Eat junk food without penalty
+Skip Punishment    Cancel a punishment
+Lazy Day Pass    No discipline penalty for a day
+Streak Saver    Streak doesn’t reset
+Bonus Quest    Extra daily quest
+Stat Boost Week    2x XP for a week
+Title    Gives passive bonus
+
+You store rewards and use them when you want.
+
+⸻
+
+10. Punishments
+
+If you don’t do important things, you get punishments:
+
+Punishment    Example
+Pushups    50 pushups
+Cold shower    2–3 min
+No phone    3 hours
+Extra run    15 min
+Extra study    1 hour
+
+You have time to complete punishment.
+If you don’t → more XP loss + bigger punishment.
+
+⸻
+
+11. Boss Fights ⚔️
+
+Big real-life events = Boss fights.
+
+Event    Stats
+Exam    Intellect
+Basketball game    Athletics
+Tryouts    Athletics + Charisma
+Piano performance    Creativity + Focus
+Tournament    Athletics + Discipline
+
+Boss fights give huge XP.
+
+⸻
+
+12. Random Events 🎲
+
+Rare events like:
+    •    XP boost day
+    •    Double quests
+    •    Surprise challenge
+    •    Mystery reward
+    •    Small injury (XP loss)
+    •    Bonus XP weekend
+
+⸻
+
+13. Every Night System
+
+Every night you say:
+
+“It’s time.”
+
+Then the system:
+    1.    Asks questions about your day
+    2.    Calculates XP
+    3.    Updates stats
+    4.    Checks streaks
+    5.    Checks achievements
+    6.    Gives rewards/punishments
+    7.    Generates a Daily Report
+    8.    Generates Tomorrow’s Daily Quests
+    9.    Saves everything
+
+This is like a save game.
+
+⸻
+
+PART 2 — PROMPT FOR IDE (VERY IMPORTANT)
+
+Copy this and paste into an AI inside an IDE:
+
+⸻
+
+PROMPT TO BUILD THE APP
+
+I want you to build a "Life RPG" application.
+
+The app turns real life into an RPG game where the user gains XP, levels up stats, completes quests, and tracks progress like a video game.
+
+MAIN FEATURES:
+
+1. CHARACTER SYSTEM
+- Character name
+- Character class
+- Overall level
+- Total XP
+- Titles
+
+2. STATS SYSTEM (9 stats)
+- Strength
+- Stamina
+- Athletics
+- Intellect
+- Focus
+- Discipline
+- Health
+- Charisma
+- Creativity
+
+Each stat must have:
+- XP
+- Level
+- Title
+- Level progression curve (hard progression)
+
+3. XP SYSTEM
+The user logs daily activities.
+Each activity gives XP to one or multiple stats.
+Some activities give XP and also remove XP from other stats.
+
+4. DAILY LOG SYSTEM
+Each day the user answers questions like:
+- Gym?
+- Running?
+- Basketball?
+- Studying?
+- Deep work?
+- Piano?
+- Sleep?
+- Food?
+- Socializing?
+- Phone time?
+- etc.
+
+The app calculates XP automatically.
+
+5. QUEST SYSTEM
+- Daily quests (3 per day, randomly generated from a list)
+- Side quests (medium goals like bench 150 lbs)
+- Main quests (long-term goals)
+
+6. STREAK SYSTEM
+Track streaks for habits like:
+- Running streak
+- Gym streak
+- Piano streak
+- Sleep streak
+- Deep work streak
+Streaks give XP multipliers.
+
+7. REWARD SYSTEM
+Rewards are stored in an inventory.
+Rewards include:
+- XP boosts
+- Punishment skips
+- Junk food pass
+- Lazy day pass
+- Streak saver
+- Bonus quest
+- Double XP week
+
+8. PUNISHMENT SYSTEM
+If the user skips important habits:
+- XP loss
+- Punishments assigned
+- Punishments have deadlines
+- If not completed → more XP loss
+
+9. ACHIEVEMENTS SYSTEM
+Example:
+- Run 10 times → Runner I
+- 50 basketball sessions → Hooper I
+- 20 workouts → Gym I
+Achievements give titles and bonuses.
+
+10. BOSS FIGHTS
+Big events give huge XP:
+- Exams
+- Games
+- Performances
+- Tryouts
+
+11. RANDOM EVENTS
+Random chance each day for:
+- XP boost
+- Bonus quest
+- Injury
+- Mystery reward
+
+12. DAILY REPORT
+Each day the app generates a report showing:
+- XP gained/lost
+- Level ups
+- Streaks
+- Rewards
+- Punishments
+- Quest progress
+
+13. UI
+The UI should look like a video game character menu:
+- Character page
+- Stats page
+- Quests page
+- Inventory (rewards)
+- Punishments
+- Achievements
+- Daily log page
+
+14. IMPORTANT
+The system must be expandable, because levels and achievements never stop.
+
+Build this app structure, data model, and logic.
+Use a clean RPG-style UI.
+
+
+⸻
+
+Final Thought
+
+What you’re building is basically:
+    •    Habit tracker
+    •    Goal tracker
+    •    Skill tracker
+    •    Discipline system
+    •    But disguised as a video game
+
+Which is why it’s actually a very strong motivation system.
