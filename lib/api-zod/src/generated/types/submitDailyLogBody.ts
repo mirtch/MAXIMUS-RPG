@@ -5,24 +5,15 @@
  * Life RPG API
  * OpenAPI spec version: 0.1.0
  */
+import type { OneTimeActivity } from "./oneTimeActivity";
 
 export interface SubmitDailyLogBody {
-  /** List of activity names done today */
-  activities: string[];
+  /** IDs of activities completed today */
+  completedActivityIds: number[];
+  sleepHours?: number;
+  phoneHours?: number;
   /** @nullable */
   notes?: string | null;
-  gymDone?: boolean;
-  runningDone?: boolean;
-  basketballDone?: boolean;
-  studyDone?: boolean;
-  deepWorkDone?: boolean;
-  pianoDone?: boolean;
-  sleepHours?: number;
-  ateJunkFood?: boolean;
-  phoneHours?: number;
-  socializedToday?: boolean;
-  plannedDay?: boolean;
-  coldShower?: boolean;
-  meditatedToday?: boolean;
-  drankWater?: boolean;
+  /** Custom one-time activities to log */
+  oneTimeActivities?: OneTimeActivity[];
 }

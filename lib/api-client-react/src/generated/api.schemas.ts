@@ -41,7 +41,7 @@ export interface AddXpBody {
   reason?: string;
 }
 
-export interface XpGain {
+export interface XpReward {
   statName: string;
   amount: number;
 }
@@ -49,10 +49,42 @@ export interface XpGain {
 export interface Activity {
   id: number;
   name: string;
+  displayName: string;
   description: string;
-  xpGains: XpGain[];
-  xpLosses: XpGain[];
   category: string;
+  xpRewards: XpReward[];
+  isCore: boolean;
+  isReusable: boolean;
+  archived: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface XpGain {
+  statName: string;
+  amount: number;
+}
+
+export interface CreateActivityBody {
+  name: string;
+  displayName: string;
+  description: string;
+  category: string;
+  xpRewards: XpReward[];
+  isReusable?: boolean;
+}
+
+export interface OneTimeActivity {
+  displayName: string;
+  description: string;
+  category: string;
+  xpRewards: XpReward[];
+}
+
+export interface SeedActivitiesResult {
+  seeded: number;
+  total: number;
+  activities: Activity[];
 }
 
 export interface XpChange {
@@ -70,7 +102,12 @@ export interface LevelUp {
 export interface DailyLog {
   id: number;
   date: string;
+  completedActivityIds: number[];
   activities: string[];
+  /** @nullable */
+  sleepHours?: number | null;
+  /** @nullable */
+  phoneHours?: number | null;
   totalXpGained: number;
   totalXpLost: number;
   xpChanges: XpChange[];
@@ -84,24 +121,14 @@ export interface DailyLog {
 }
 
 export interface SubmitDailyLogBody {
-  /** List of activity names done today */
-  activities: string[];
+  /** IDs of activities completed today */
+  completedActivityIds: number[];
+  sleepHours?: number;
+  phoneHours?: number;
   /** @nullable */
   notes?: string | null;
-  gymDone?: boolean;
-  runningDone?: boolean;
-  basketballDone?: boolean;
-  studyDone?: boolean;
-  deepWorkDone?: boolean;
-  pianoDone?: boolean;
-  sleepHours?: number;
-  ateJunkFood?: boolean;
-  phoneHours?: number;
-  socializedToday?: boolean;
-  plannedDay?: boolean;
-  coldShower?: boolean;
-  meditatedToday?: boolean;
-  drankWater?: boolean;
+  /** Custom one-time activities to log */
+  oneTimeActivities?: OneTimeActivity[];
 }
 
 export interface Achievement {

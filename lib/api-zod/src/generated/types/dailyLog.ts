@@ -11,7 +11,12 @@ import type { XpChange } from "./xpChange";
 export interface DailyLog {
   id: number;
   date: Date;
+  completedActivityIds: number[];
   activities: string[];
+  /** @nullable */
+  sleepHours?: number | null;
+  /** @nullable */
+  phoneHours?: number | null;
   totalXpGained: number;
   totalXpLost: number;
   xpChanges: XpChange[];

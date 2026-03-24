@@ -91,22 +91,93 @@ export const AddStatXpResponse = zod.object({
 export const GetActivitiesResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
+  displayName: zod.string(),
   description: zod.string(),
-  xpGains: zod.array(
-    zod.object({
-      statName: zod.string(),
-      amount: zod.number(),
-    }),
-  ),
-  xpLosses: zod.array(
-    zod.object({
-      statName: zod.string(),
-      amount: zod.number(),
-    }),
-  ),
   category: zod.string(),
+  xpRewards: zod.array(
+    zod.object({
+      statName: zod.string(),
+      amount: zod.number(),
+    }),
+  ),
+  isCore: zod.boolean(),
+  isReusable: zod.boolean(),
+  archived: zod.boolean(),
+  sortOrder: zod.number(),
+  createdAt: zod.date(),
 });
 export const GetActivitiesResponse = zod.array(GetActivitiesResponseItem);
+
+/**
+ * @summary Create a custom activity
+ */
+export const CreateActivityBody = zod.object({
+  name: zod.string(),
+  displayName: zod.string(),
+  description: zod.string(),
+  category: zod.string(),
+  xpRewards: zod.array(
+    zod.object({
+      statName: zod.string(),
+      amount: zod.number(),
+    }),
+  ),
+  isReusable: zod.boolean().optional(),
+});
+
+/**
+ * @summary Archive a custom activity
+ */
+export const DeleteActivityParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteActivityResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  displayName: zod.string(),
+  description: zod.string(),
+  category: zod.string(),
+  xpRewards: zod.array(
+    zod.object({
+      statName: zod.string(),
+      amount: zod.number(),
+    }),
+  ),
+  isCore: zod.boolean(),
+  isReusable: zod.boolean(),
+  archived: zod.boolean(),
+  sortOrder: zod.number(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Seed core activities (idempotent)
+ */
+export const SeedActivitiesResponse = zod.object({
+  seeded: zod.number(),
+  total: zod.number(),
+  activities: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      displayName: zod.string(),
+      description: zod.string(),
+      category: zod.string(),
+      xpRewards: zod.array(
+        zod.object({
+          statName: zod.string(),
+          amount: zod.number(),
+        }),
+      ),
+      isCore: zod.boolean(),
+      isReusable: zod.boolean(),
+      archived: zod.boolean(),
+      sortOrder: zod.number(),
+      createdAt: zod.date(),
+    }),
+  ),
+});
 
 /**
  * @summary Get daily logs
@@ -118,7 +189,10 @@ export const GetDailyLogsQueryParams = zod.object({
 export const GetDailyLogsResponseItem = zod.object({
   id: zod.number(),
   date: zod.date(),
+  completedActivityIds: zod.array(zod.number()),
   activities: zod.array(zod.string()),
+  sleepHours: zod.number().nullish(),
+  phoneHours: zod.number().nullish(),
   totalXpGained: zod.number(),
   totalXpLost: zod.number(),
   xpChanges: zod.array(
@@ -147,24 +221,28 @@ export const GetDailyLogsResponse = zod.array(GetDailyLogsResponseItem);
  * @summary Submit a daily log for today
  */
 export const SubmitDailyLogBody = zod.object({
-  activities: zod
-    .array(zod.string())
-    .describe("List of activity names done today"),
-  notes: zod.string().nullish(),
-  gymDone: zod.boolean().optional(),
-  runningDone: zod.boolean().optional(),
-  basketballDone: zod.boolean().optional(),
-  studyDone: zod.boolean().optional(),
-  deepWorkDone: zod.boolean().optional(),
-  pianoDone: zod.boolean().optional(),
+  completedActivityIds: zod
+    .array(zod.number())
+    .describe("IDs of activities completed today"),
   sleepHours: zod.number().optional(),
-  ateJunkFood: zod.boolean().optional(),
   phoneHours: zod.number().optional(),
-  socializedToday: zod.boolean().optional(),
-  plannedDay: zod.boolean().optional(),
-  coldShower: zod.boolean().optional(),
-  meditatedToday: zod.boolean().optional(),
-  drankWater: zod.boolean().optional(),
+  notes: zod.string().nullish(),
+  oneTimeActivities: zod
+    .array(
+      zod.object({
+        displayName: zod.string(),
+        description: zod.string(),
+        category: zod.string(),
+        xpRewards: zod.array(
+          zod.object({
+            statName: zod.string(),
+            amount: zod.number(),
+          }),
+        ),
+      }),
+    )
+    .optional()
+    .describe("Custom one-time activities to log"),
 });
 
 /**
@@ -173,7 +251,10 @@ export const SubmitDailyLogBody = zod.object({
 export const GetTodayLogResponse = zod.object({
   id: zod.number(),
   date: zod.date(),
+  completedActivityIds: zod.array(zod.number()),
   activities: zod.array(zod.string()),
+  sleepHours: zod.number().nullish(),
+  phoneHours: zod.number().nullish(),
   totalXpGained: zod.number(),
   totalXpLost: zod.number(),
   xpChanges: zod.array(

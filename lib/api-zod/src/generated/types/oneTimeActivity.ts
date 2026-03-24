@@ -7,16 +7,9 @@
  */
 import type { XpReward } from "./xpReward";
 
-export interface Activity {
-  id: number;
-  name: string;
+export interface OneTimeActivity {
   displayName: string;
   description: string;
   category: string;
   xpRewards: XpReward[];
-  isCore: boolean;
-  isReusable: boolean;
-  archived: boolean;
-  sortOrder: number;
-  createdAt: Date;
 }

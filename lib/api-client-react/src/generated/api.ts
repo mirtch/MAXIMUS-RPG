@@ -23,6 +23,7 @@ import type {
   BossFight,
   Character,
   CompleteBossFightBody,
+  CreateActivityBody,
   CreateBossFightBody,
   CreateMainQuestBody,
   CreateSideQuestBody,
@@ -34,6 +35,7 @@ import type {
   MainQuest,
   Punishment,
   Reward,
+  SeedActivitiesResult,
   SideQuest,
   Stat,
   Streak,
@@ -512,6 +514,257 @@ export function useGetActivities<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Create a custom activity
+ */
+export const getCreateActivityUrl = () => {
+  return `/api/activities`;
+};
+
+export const createActivity = async (
+  createActivityBody: CreateActivityBody,
+  options?: RequestInit,
+): Promise<Activity> => {
+  return customFetch<Activity>(getCreateActivityUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createActivityBody),
+  });
+};
+
+export const getCreateActivityMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createActivity>>,
+    TError,
+    { data: BodyType<CreateActivityBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createActivity>>,
+  TError,
+  { data: BodyType<CreateActivityBody> },
+  TContext
+> => {
+  const mutationKey = ["createActivity"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createActivity>>,
+    { data: BodyType<CreateActivityBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createActivity(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateActivityMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createActivity>>
+>;
+export type CreateActivityMutationBody = BodyType<CreateActivityBody>;
+export type CreateActivityMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a custom activity
+ */
+export const useCreateActivity = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createActivity>>,
+    TError,
+    { data: BodyType<CreateActivityBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createActivity>>,
+  TError,
+  { data: BodyType<CreateActivityBody> },
+  TContext
+> => {
+  return useMutation(getCreateActivityMutationOptions(options));
+};
+
+/**
+ * @summary Archive a custom activity
+ */
+export const getDeleteActivityUrl = (id: number) => {
+  return `/api/activities/${id}`;
+};
+
+export const deleteActivity = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Activity> => {
+  return customFetch<Activity>(getDeleteActivityUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteActivityMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteActivity>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteActivity>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteActivity"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteActivity>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteActivity(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteActivityMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteActivity>>
+>;
+
+export type DeleteActivityMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Archive a custom activity
+ */
+export const useDeleteActivity = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteActivity>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteActivity>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteActivityMutationOptions(options));
+};
+
+/**
+ * @summary Seed core activities (idempotent)
+ */
+export const getSeedActivitiesUrl = () => {
+  return `/api/activities/seed`;
+};
+
+export const seedActivities = async (
+  options?: RequestInit,
+): Promise<SeedActivitiesResult> => {
+  return customFetch<SeedActivitiesResult>(getSeedActivitiesUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSeedActivitiesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof seedActivities>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof seedActivities>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["seedActivities"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof seedActivities>>,
+    void
+  > = () => {
+    return seedActivities(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SeedActivitiesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof seedActivities>>
+>;
+
+export type SeedActivitiesMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Seed core activities (idempotent)
+ */
+export const useSeedActivities = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof seedActivities>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof seedActivities>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getSeedActivitiesMutationOptions(options));
+};
 
 /**
  * @summary Get daily logs
