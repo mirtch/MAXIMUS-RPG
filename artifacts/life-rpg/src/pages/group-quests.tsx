@@ -42,7 +42,7 @@ export default function GroupQuestsPage() {
   const [inviteUsername, setInviteUsername] = useState("");
   const [questTitle, setQuestTitle] = useState("");
   const [questDesc, setQuestDesc] = useState("");
-  const [questXp, setQuestXp] = useState("500");
+  const [questXp, setQuestXp] = useState("");
   const [questPartyId, setQuestPartyId] = useState<number | null>(null);
   const [status, setStatus] = useState("");
 
@@ -142,7 +142,7 @@ export default function GroupQuestsPage() {
           </div>
           <Input placeholder="Quest title" value={questTitle} onChange={e => setQuestTitle(e.target.value)} />
           <Input placeholder="Description" value={questDesc} onChange={e => setQuestDesc(e.target.value)} />
-          <Input placeholder="XP reward" type="number" value={questXp} onChange={e => setQuestXp(e.target.value)} />
+          <Input placeholder="XP reward e.g. 500" type="number" value={questXp} onChange={e => setQuestXp(e.target.value)} />
           <Button onClick={createQuest}>Create Quest</Button>
         </Card>
       )}

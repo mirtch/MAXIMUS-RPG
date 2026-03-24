@@ -1,9 +1,10 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { db, usersTable, characterTable, statsTable } from "@workspace/db";
+import { db, usersTable, characterTable, statsTable, activitiesTable, streaksTable } from "@workspace/db";
 import { generateToken, requireAuth, type AuthRequest } from "../lib/auth.js";
 import { STAT_NAMES, STAT_DISPLAY_NAMES } from "../lib/rpg.js";
+import { CORE_ACTIVITIES } from "../lib/seed-activities.js";
 
 const router: IRouter = Router();
 
@@ -65,6 +66,24 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       level: 1,
       title: "Novice",
     });
+  }
+
+  // Seed core activities for the new user
+  for (const activity of CORE_ACTIVITIES) {
+    await db.insert(activitiesTable).values({ ...activity, userId: user.id });
+  }
+
+  // Seed default streaks for the new user
+  const defaultStreaks = [
+    { name: "gym", displayName: "Gym Streak" },
+    { name: "running", displayName: "Running Streak" },
+    { name: "piano", displayName: "Piano Streak" },
+    { name: "sleep_8h", displayName: "8h Sleep Streak" },
+    { name: "deep_work", displayName: "Deep Work Streak" },
+    { name: "planned_day", displayName: "Planned Day Streak" },
+  ];
+  for (const s of defaultStreaks) {
+    await db.insert(streaksTable).values({ userId: user.id, name: s.name, displayName: s.displayName, currentStreak: 0, longestStreak: 0 });
   }
 
   const token = generateToken(user.id);
