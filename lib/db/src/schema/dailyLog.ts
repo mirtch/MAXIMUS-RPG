@@ -1,9 +1,11 @@
 import { pgTable, serial, integer, timestamp, text, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
 export const dailyLogTable = pgTable("daily_log", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id),
   date: timestamp("date", { withTimezone: true }).notNull().defaultNow(),
   // Activity IDs completed today (references activities table)
   completedActivityIds: integer("completed_activity_ids").array().notNull().default([]),

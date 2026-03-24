@@ -1,11 +1,14 @@
 import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
 export const characterTable = pgTable("character", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id),
   name: text("name").notNull().default("MAXIMUS"),
-  class: text("class").notNull().default("Prospect"),
+  avatar: text("avatar").notNull().default("⚔️"),
+  class: text("class").notNull().default("Warrior"),
   overallLevel: integer("overall_level").notNull().default(1),
   totalXp: integer("total_xp").notNull().default(0),
   title: text("title").notNull().default("Novice"),

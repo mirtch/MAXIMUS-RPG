@@ -1,20 +1,21 @@
 import { Router, type IRouter } from "express";
-import { eq, asc } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import { db, activitiesTable } from "@workspace/db";
 import { CORE_ACTIVITIES } from "../lib/seed-activities.js";
+import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
-// GET /activities — all non-archived activities
-router.get("/activities", async (_req, res): Promise<void> => {
+router.get("/activities", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
   const activities = await db.select().from(activitiesTable)
-    .where(eq(activitiesTable.archived, false))
+    .where(and(eq(activitiesTable.archived, false), eq(activitiesTable.userId, userId)))
     .orderBy(asc(activitiesTable.sortOrder), asc(activitiesTable.id));
   res.json(activities);
 });
 
-// POST /activities — create a custom activity
-router.post("/activities", async (req, res): Promise<void> => {
+router.post("/activities", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
   const { name, displayName, description, category, xpRewards, isReusable } = req.body;
 
   if (!name || !displayName || !description || !category || !xpRewards) {
@@ -23,6 +24,7 @@ router.post("/activities", async (req, res): Promise<void> => {
   }
 
   const [activity] = await db.insert(activitiesTable).values({
+    userId,
     name,
     displayName,
     description,
@@ -37,10 +39,10 @@ router.post("/activities", async (req, res): Promise<void> => {
   res.status(201).json(activity);
 });
 
-// DELETE /activities/:id — archive a custom activity (core activities cannot be archived)
-router.delete("/activities/:id", async (req, res): Promise<void> => {
+router.delete("/activities/:id", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
   const id = parseInt(req.params.id as string, 10);
-  const [activity] = await db.select().from(activitiesTable).where(eq(activitiesTable.id, id));
+  const [activity] = await db.select().from(activitiesTable).where(and(eq(activitiesTable.id, id), eq(activitiesTable.userId, userId)));
 
   if (!activity) {
     res.status(404).json({ error: "Activity not found" });
@@ -59,18 +61,18 @@ router.delete("/activities/:id", async (req, res): Promise<void> => {
   res.json(archived);
 });
 
-// POST /activities/seed — seed core activities (idempotent)
-router.post("/activities/seed", async (_req, res): Promise<void> => {
-  const existing = await db.select().from(activitiesTable).where(eq(activitiesTable.isCore, true));
+router.post("/activities/seed", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
+  const existing = await db.select().from(activitiesTable).where(and(eq(activitiesTable.isCore, true), eq(activitiesTable.userId, userId)));
   const existingNames = new Set(existing.map(a => a.name));
 
-  const toInsert = CORE_ACTIVITIES.filter(a => !existingNames.has(a.name));
+  const toInsert = CORE_ACTIVITIES.filter(a => !existingNames.has(a.name)).map(a => ({ ...a, userId }));
   if (toInsert.length > 0) {
     await db.insert(activitiesTable).values(toInsert);
   }
 
   const all = await db.select().from(activitiesTable)
-    .where(eq(activitiesTable.isCore, true))
+    .where(and(eq(activitiesTable.isCore, true), eq(activitiesTable.userId, userId)))
     .orderBy(asc(activitiesTable.sortOrder));
 
   res.json({ seeded: toInsert.length, total: all.length, activities: all });

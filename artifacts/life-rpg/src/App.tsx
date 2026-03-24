@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import AuthPage from "@/pages/auth";
 
 // Pages
 import CharacterPage from "@/pages/character";
@@ -16,10 +18,12 @@ import PunishmentsPage from "@/pages/punishments";
 import AchievementsPage from "@/pages/achievements";
 import BossFightsPage from "@/pages/boss-fights";
 import SaveGamePage from "@/pages/save-game";
+import FriendsPage from "@/pages/friends";
+import GroupQuestsPage from "@/pages/group-quests";
 
 const queryClient = new QueryClient();
 
-function Router() {
+function GameRouter() {
   return (
     <Switch>
       <Route path="/" component={CharacterPage} />
@@ -32,24 +36,50 @@ function Router() {
       <Route path="/achievements" component={AchievementsPage} />
       <Route path="/boss-fights" component={BossFightsPage} />
       <Route path="/save-game" component={SaveGamePage} />
+      <Route path="/friends" component={FriendsPage} />
+      <Route path="/group-quests" component={GroupQuestsPage} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
+function AuthGate() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="dark min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="text-4xl">⚔️</div>
+          <p className="text-muted-foreground">Loading MAXIMUS RPG...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
+
+  return (
+    <Layout>
+      <GameRouter />
+    </Layout>
+  );
+}
+
 function App() {
-  // Use React Query setup and Layout wrapper
   return (
     <div className="dark">
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Layout>
-              <Router />
-            </Layout>
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <AuthGate />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </div>
   );

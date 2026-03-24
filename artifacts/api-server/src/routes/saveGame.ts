@@ -1,13 +1,15 @@
 import { Router, type IRouter } from "express";
+import { eq } from "drizzle-orm";
 import { db, characterTable, statsTable, dailyLogTable, dailyQuestsTable, sideQuestsTable, mainQuestsTable, streaksTable, rewardsTable, punishmentsTable, achievementsTable, bossFightsTable, activitiesTable } from "@workspace/db";
+import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
-// ─── Export: snapshot every table into a single JSON document ───
+router.get("/save-game/export", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
 
-router.get("/save-game/export", async (_req, res): Promise<void> => {
   const [
     character,
     stats,
@@ -22,18 +24,18 @@ router.get("/save-game/export", async (_req, res): Promise<void> => {
     bossFights,
     activities,
   ] = await Promise.all([
-    db.select().from(characterTable),
-    db.select().from(statsTable),
-    db.select().from(dailyLogTable),
-    db.select().from(dailyQuestsTable),
-    db.select().from(sideQuestsTable),
-    db.select().from(mainQuestsTable),
-    db.select().from(streaksTable),
-    db.select().from(rewardsTable),
-    db.select().from(punishmentsTable),
-    db.select().from(achievementsTable),
-    db.select().from(bossFightsTable),
-    db.select().from(activitiesTable),
+    db.select().from(characterTable).where(eq(characterTable.userId, userId)),
+    db.select().from(statsTable).where(eq(statsTable.userId, userId)),
+    db.select().from(dailyLogTable).where(eq(dailyLogTable.userId, userId)),
+    db.select().from(dailyQuestsTable).where(eq(dailyQuestsTable.userId, userId)),
+    db.select().from(sideQuestsTable).where(eq(sideQuestsTable.userId, userId)),
+    db.select().from(mainQuestsTable).where(eq(mainQuestsTable.userId, userId)),
+    db.select().from(streaksTable).where(eq(streaksTable.userId, userId)),
+    db.select().from(rewardsTable).where(eq(rewardsTable.userId, userId)),
+    db.select().from(punishmentsTable).where(eq(punishmentsTable.userId, userId)),
+    db.select().from(achievementsTable).where(eq(achievementsTable.userId, userId)),
+    db.select().from(bossFightsTable).where(eq(bossFightsTable.userId, userId)),
+    db.select().from(activitiesTable).where(eq(activitiesTable.userId, userId)),
   ]);
 
   const saveData = {
@@ -62,9 +64,8 @@ router.get("/save-game/export", async (_req, res): Promise<void> => {
   res.json(saveData);
 });
 
-// ─── Import: wipe current data and restore from a save file ───
-
-router.post("/save-game/import", async (req, res): Promise<void> => {
+router.post("/save-game/import", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
   const saveData = req.body;
 
   if (!saveData || saveData.game !== "MAXIMUS RPG" || !saveData.version) {
@@ -72,30 +73,25 @@ router.post("/save-game/import", async (req, res): Promise<void> => {
     return;
   }
 
-  if (saveData.version > SAVE_VERSION) {
-    res.status(400).json({ error: `Save file version ${saveData.version} is newer than supported (${SAVE_VERSION}). Update your app first.` });
-    return;
-  }
-
   try {
-    // Clear all tables (order matters for referential safety — children first)
-    await db.delete(dailyLogTable);
-    await db.delete(dailyQuestsTable);
-    await db.delete(sideQuestsTable);
-    await db.delete(mainQuestsTable);
-    await db.delete(bossFightsTable);
-    await db.delete(rewardsTable);
-    await db.delete(punishmentsTable);
-    await db.delete(achievementsTable);
-    await db.delete(streaksTable);
-    await db.delete(statsTable);
-    await db.delete(activitiesTable);
-    await db.delete(characterTable);
+    // Clear user's data only
+    await db.delete(dailyLogTable).where(eq(dailyLogTable.userId, userId));
+    await db.delete(dailyQuestsTable).where(eq(dailyQuestsTable.userId, userId));
+    await db.delete(sideQuestsTable).where(eq(sideQuestsTable.userId, userId));
+    await db.delete(mainQuestsTable).where(eq(mainQuestsTable.userId, userId));
+    await db.delete(bossFightsTable).where(eq(bossFightsTable.userId, userId));
+    await db.delete(rewardsTable).where(eq(rewardsTable.userId, userId));
+    await db.delete(punishmentsTable).where(eq(punishmentsTable.userId, userId));
+    await db.delete(achievementsTable).where(eq(achievementsTable.userId, userId));
+    await db.delete(streaksTable).where(eq(streaksTable.userId, userId));
+    await db.delete(statsTable).where(eq(statsTable.userId, userId));
+    await db.delete(activitiesTable).where(eq(activitiesTable.userId, userId));
+    await db.delete(characterTable).where(eq(characterTable.userId, userId));
 
     // Restore character
     if (saveData.character) {
-      const { id, ...charData } = saveData.character;
-      await db.insert(characterTable).values(charData);
+      const { id, userId: _, ...charData } = saveData.character;
+      await db.insert(characterTable).values({ ...charData, userId });
     }
 
     // Restore all collection tables
@@ -116,8 +112,8 @@ router.post("/save-game/import", async (req, res): Promise<void> => {
     for (const { data, table } of collections) {
       if (Array.isArray(data) && data.length > 0) {
         const rows = data.map((row: Record<string, unknown>) => {
-          const { id, ...rest } = row;
-          return rest;
+          const { id, userId: _, ...rest } = row;
+          return { ...rest, userId };
         });
         await db.insert(table).values(rows);
       }

@@ -1,9 +1,11 @@
 import { pgTable, serial, text, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
 export const bossFightsTable = pgTable("boss_fights", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id),
   name: text("name").notNull(),
   description: text("description").notNull(),
   eventType: text("event_type").notNull(),

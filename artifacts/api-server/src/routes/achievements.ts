@@ -1,5 +1,7 @@
 import { Router, type IRouter } from "express";
+import { eq } from "drizzle-orm";
 import { db, achievementsTable } from "@workspace/db";
+import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
@@ -26,18 +28,19 @@ const DEFAULT_ACHIEVEMENTS = [
   { name: "Boss Killer", description: "Win your first boss fight", icon: "💀", requirement: "Win 1 boss fight", xpBonus: 500, unlocked: false },
 ];
 
-async function ensureAchievementsExist() {
-  const existing = await db.select().from(achievementsTable);
+async function ensureAchievementsExist(userId: number) {
+  const existing = await db.select().from(achievementsTable).where(eq(achievementsTable.userId, userId));
   for (const a of DEFAULT_ACHIEVEMENTS) {
     if (!existing.find(e => e.name === a.name)) {
-      await db.insert(achievementsTable).values(a);
+      await db.insert(achievementsTable).values({ ...a, userId });
     }
   }
 }
 
-router.get("/achievements", async (req, res): Promise<void> => {
-  await ensureAchievementsExist();
-  const achievements = await db.select().from(achievementsTable).orderBy(achievementsTable.id);
+router.get("/achievements", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
+  await ensureAchievementsExist(userId);
+  const achievements = await db.select().from(achievementsTable).where(eq(achievementsTable.userId, userId)).orderBy(achievementsTable.id);
   res.json(achievements);
 });
 

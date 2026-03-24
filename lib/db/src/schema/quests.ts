@@ -1,9 +1,11 @@
 import { pgTable, serial, text, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
 export const dailyQuestsTable = pgTable("daily_quests", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
   xpReward: integer("xp_reward").notNull().default(25),
@@ -20,6 +22,7 @@ export type DailyQuest = typeof dailyQuestsTable.$inferSelect;
 
 export const sideQuestsTable = pgTable("side_quests", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
   xpReward: integer("xp_reward").notNull().default(200),
@@ -35,6 +38,7 @@ export type SideQuest = typeof sideQuestsTable.$inferSelect;
 
 export const mainQuestsTable = pgTable("main_quests", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
   xpReward: integer("xp_reward").notNull().default(1000),

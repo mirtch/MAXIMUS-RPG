@@ -1,16 +1,18 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, characterTable, statsTable } from "@workspace/db";
 import { STAT_NAMES, STAT_DISPLAY_NAMES } from "../lib/rpg.js";
+import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
-export async function ensureCharacterExists() {
-  const [existing] = await db.select().from(characterTable).limit(1);
+export async function ensureCharacterExists(userId: number) {
+  const [existing] = await db.select().from(characterTable).where(eq(characterTable.userId, userId)).limit(1);
   if (!existing) {
     const [created] = await db.insert(characterTable).values({
+      userId,
       name: "MAXIMUS",
-      class: "Prospect",
+      class: "Warrior",
       overallLevel: 1,
       totalXp: 0,
       title: "Beginner",
@@ -20,12 +22,13 @@ export async function ensureCharacterExists() {
   return existing;
 }
 
-export async function ensureStatsExist() {
-  const existingStats = await db.select().from(statsTable);
+export async function ensureStatsExist(userId: number) {
+  const existingStats = await db.select().from(statsTable).where(eq(statsTable.userId, userId));
   for (const name of STAT_NAMES) {
     const exists = existingStats.find(s => s.name === name);
     if (!exists) {
       await db.insert(statsTable).values({
+        userId,
         name,
         displayName: STAT_DISPLAY_NAMES[name],
         xp: 0,
@@ -36,18 +39,21 @@ export async function ensureStatsExist() {
   }
 }
 
-router.get("/character", async (req, res): Promise<void> => {
-  await ensureStatsExist();
-  const character = await ensureCharacterExists();
+router.get("/character", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
+  await ensureStatsExist(userId);
+  const character = await ensureCharacterExists(userId);
   res.json(character);
 });
 
-router.patch("/character", async (req, res): Promise<void> => {
-  const character = await ensureCharacterExists();
-  const { name, class: charClass } = req.body;
+router.patch("/character", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
+  const character = await ensureCharacterExists(userId);
+  const { name, class: charClass, avatar } = req.body;
   const updates: Record<string, string> = {};
   if (name) updates.name = name;
   if (charClass) updates.class = charClass;
+  if (avatar) updates.avatar = avatar;
 
   if (Object.keys(updates).length === 0) {
     res.json(character);

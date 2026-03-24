@@ -1,7 +1,8 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, inArray } from "drizzle-orm";
-import { db, dailyLogTable, statsTable, characterTable, streaksTable, activitiesTable } from "@workspace/db";
+import { eq, and, desc, inArray } from "drizzle-orm";
+import { db, dailyLogTable, statsTable, characterTable, streaksTable, activitiesTable, activityFeedTable } from "@workspace/db";
 import { getLevelFromXp, getTitleForLevel, getOverallTitleFromLevel, calculateXpChanges, type DailyLogInput } from "../lib/rpg.js";
+import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
@@ -17,18 +18,20 @@ function endOfDay(date: Date): Date {
   return d;
 }
 
-router.get("/daily-log", async (req, res): Promise<void> => {
+router.get("/daily-log", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 30;
-  const logs = await db.select().from(dailyLogTable).orderBy(desc(dailyLogTable.date)).limit(limit);
+  const logs = await db.select().from(dailyLogTable).where(eq(dailyLogTable.userId, userId)).orderBy(desc(dailyLogTable.date)).limit(limit);
   res.json(logs);
 });
 
-router.get("/daily-log/today", async (_req, res): Promise<void> => {
+router.get("/daily-log/today", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
   const now = new Date();
   const todayStart = startOfDay(now);
   const todayEnd = endOfDay(now);
 
-  const logs = await db.select().from(dailyLogTable).orderBy(desc(dailyLogTable.date)).limit(1);
+  const logs = await db.select().from(dailyLogTable).where(eq(dailyLogTable.userId, userId)).orderBy(desc(dailyLogTable.date)).limit(1);
   const todayLog = logs.find(l => {
     const logDate = new Date(l.date);
     return logDate >= todayStart && logDate <= todayEnd;
@@ -42,14 +45,15 @@ router.get("/daily-log/today", async (_req, res): Promise<void> => {
   res.json(todayLog);
 });
 
-router.post("/daily-log", async (req, res): Promise<void> => {
+router.post("/daily-log", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
   const input: DailyLogInput = req.body;
   const allActivityIds = [...(input.completedActivityIds || [])];
 
-  // Handle one-time custom activities: insert them, collect their IDs
   if (input.oneTimeActivities && input.oneTimeActivities.length > 0) {
     for (const ota of input.oneTimeActivities) {
       const [created] = await db.insert(activitiesTable).values({
+        userId,
         name: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
         displayName: ota.displayName,
         description: ota.description,
@@ -64,7 +68,6 @@ router.post("/daily-log", async (req, res): Promise<void> => {
     }
   }
 
-  // Fetch activity definitions for XP calculation
   const activityDefs = allActivityIds.length > 0
     ? await db.select().from(activitiesTable).where(inArray(activitiesTable.id, allActivityIds))
     : [];
@@ -78,10 +81,9 @@ router.post("/daily-log", async (req, res): Promise<void> => {
     })),
   );
 
-  // Update stats
   const levelUps: Array<{ statName: string; newLevel: number; newTitle: string }> = [];
   const statUpdates: Record<string, { oldLevel: number; newXp: number; newLevel: number; newTitle: string }> = {};
-  const allStats = await db.select().from(statsTable);
+  const allStats = await db.select().from(statsTable).where(eq(statsTable.userId, userId));
 
   for (const change of xpChanges) {
     const stat = allStats.find(s => s.name === change.statName);
@@ -100,27 +102,26 @@ router.post("/daily-log", async (req, res): Promise<void> => {
   for (const [statName, update] of Object.entries(statUpdates)) {
     await db.update(statsTable)
       .set({ xp: update.newXp, level: update.newLevel, title: update.newTitle })
-      .where(eq(statsTable.name, statName));
+      .where(and(eq(statsTable.name, statName), eq(statsTable.userId, userId)));
 
     if (update.newLevel > update.oldLevel) {
       levelUps.push({ statName, newLevel: update.newLevel, newTitle: update.newTitle });
     }
   }
 
-  // Update overall character
-  const updatedStats = await db.select().from(statsTable);
+  const updatedStats = await db.select().from(statsTable).where(eq(statsTable.userId, userId));
   const totalXp = updatedStats.reduce((sum, s) => sum + s.xp, 0);
   const overallLevel = Math.max(1, Math.floor(totalXp / 200) + 1);
   const overallTitle = getOverallTitleFromLevel(overallLevel);
 
-  const [character] = await db.select().from(characterTable).limit(1);
+  const [character] = await db.select().from(characterTable).where(eq(characterTable.userId, userId)).limit(1);
   if (character) {
     await db.update(characterTable)
       .set({ totalXp, overallLevel, title: overallTitle })
       .where(eq(characterTable.id, character.id));
   }
 
-  // Update streaks — map activity names to streak names
+  // Streaks
   const streaksUpdated: string[] = [];
   const today = new Date();
   const yesterday = new Date(today);
@@ -138,7 +139,7 @@ router.post("/daily-log", async (req, res): Promise<void> => {
 
   for (const mapping of streakMappings) {
     if (completedActivityNames.has(mapping.activityName)) {
-      const [streak] = await db.select().from(streaksTable).where(eq(streaksTable.name, mapping.streakName));
+      const [streak] = await db.select().from(streaksTable).where(and(eq(streaksTable.name, mapping.streakName), eq(streaksTable.userId, userId)));
       if (streak) {
         const lastDate = streak.lastActivityDate ? new Date(streak.lastActivityDate) : null;
         let newStreak = streak.currentStreak;
@@ -162,16 +163,15 @@ router.post("/daily-log", async (req, res): Promise<void> => {
         const newLongest = Math.max(streak.longestStreak, newStreak);
         await db.update(streaksTable)
           .set({ currentStreak: newStreak, longestStreak: newLongest, lastActivityDate: today })
-          .where(eq(streaksTable.name, mapping.streakName));
+          .where(and(eq(streaksTable.name, mapping.streakName), eq(streaksTable.userId, userId)));
 
         streaksUpdated.push(mapping.streakName);
       }
     }
   }
 
-  // Sleep streak
   if (input.sleepHours !== undefined && input.sleepHours >= 8) {
-    const [sleepStreak] = await db.select().from(streaksTable).where(eq(streaksTable.name, "sleep_8h"));
+    const [sleepStreak] = await db.select().from(streaksTable).where(and(eq(streaksTable.name, "sleep_8h"), eq(streaksTable.userId, userId)));
     if (sleepStreak) {
       const lastDate = sleepStreak.lastActivityDate ? new Date(sleepStreak.lastActivityDate) : null;
       let newStreak = sleepStreak.currentStreak;
@@ -184,18 +184,17 @@ router.post("/daily-log", async (req, res): Promise<void> => {
       const newLongest = Math.max(sleepStreak.longestStreak, newStreak);
       await db.update(streaksTable)
         .set({ currentStreak: newStreak, longestStreak: newLongest, lastActivityDate: today })
-        .where(eq(streaksTable.name, "sleep_8h"));
+        .where(and(eq(streaksTable.name, "sleep_8h"), eq(streaksTable.userId, userId)));
       streaksUpdated.push("sleep_8h");
     }
   }
 
-  // Build activity name snapshot for history
   const activityNames = activityDefs.map(a => a.displayName);
-
   const totalXpGained = xpChanges.filter(c => c.amount > 0).reduce((sum, c) => sum + c.amount, 0);
   const totalXpLost = Math.abs(xpChanges.filter(c => c.amount < 0).reduce((sum, c) => sum + c.amount, 0));
 
   const [log] = await db.insert(dailyLogTable).values({
+    userId,
     date: today,
     completedActivityIds: allActivityIds,
     activities: activityNames,
@@ -210,6 +209,22 @@ router.post("/daily-log", async (req, res): Promise<void> => {
     punishmentsAssigned: [],
     notes: input.notes ?? null,
   }).returning();
+
+  // Add to social feed
+  if (totalXpGained > 0) {
+    await db.insert(activityFeedTable).values({
+      userId,
+      type: "xp_gained",
+      data: { amount: totalXpGained, activities: activityNames },
+    });
+  }
+  for (const lu of levelUps) {
+    await db.insert(activityFeedTable).values({
+      userId,
+      type: "level_up",
+      data: lu,
+    });
+  }
 
   res.status(201).json({
     log,

@@ -1,19 +1,22 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, rewardsTable } from "@workspace/db";
+import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
-router.get("/rewards", async (req, res): Promise<void> => {
-  const rewards = await db.select().from(rewardsTable).orderBy(rewardsTable.createdAt);
+router.get("/rewards", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
+  const rewards = await db.select().from(rewardsTable).where(eq(rewardsTable.userId, userId)).orderBy(rewardsTable.createdAt);
   res.json(rewards);
 });
 
-router.post("/rewards/:id/use", async (req, res): Promise<void> => {
+router.post("/rewards/:id/use", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(rawId, 10);
 
-  const [reward] = await db.select().from(rewardsTable).where(eq(rewardsTable.id, id));
+  const [reward] = await db.select().from(rewardsTable).where(and(eq(rewardsTable.id, id), eq(rewardsTable.userId, userId)));
   if (!reward) {
     res.status(404).json({ error: "Reward not found" });
     return;
