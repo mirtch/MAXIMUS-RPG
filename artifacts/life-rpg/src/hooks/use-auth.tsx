@@ -7,6 +7,7 @@ interface User {
   username: string;
   displayName: string;
   avatar: string;
+  profilePicture?: string | null;
 }
 
 interface AuthContextType {
@@ -23,6 +24,7 @@ interface RegisterData {
   password: string;
   displayName?: string;
   avatar?: string;
+  profilePicture?: string;
   characterName?: string;
   characterClass?: string;
 }

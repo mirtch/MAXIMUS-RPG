@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
 
 const AVATARS = ["⚔️", "🛡️", "🏹", "🧙", "🗡️", "🔮", "🐉", "🦅", "🐺", "🦁", "🔥", "⭐"];
 const CLASSES = [
@@ -30,6 +31,7 @@ export default function AuthPage() {
   const [characterName, setCharacterName] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("⚔️");
   const [selectedClass, setSelectedClass] = useState("Warrior");
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +64,7 @@ export default function AuthPage() {
         password,
         displayName: displayName || username,
         avatar: selectedAvatar,
+        profilePicture: profilePicture || undefined,
         characterName: characterName || displayName || username,
         characterClass: selectedClass,
       });
@@ -135,12 +138,27 @@ export default function AuthPage() {
             <h2 className="text-xl font-semibold">Create Your Character</h2>
             <form onSubmit={handleRegisterStep2} className="space-y-4">
               <div className="space-y-2">
+                <Label>Profile Picture</Label>
+                <div className="flex items-center gap-4">
+                  <ProfilePictureUpload
+                    currentImage={profilePicture}
+                    fallbackEmoji={selectedAvatar}
+                    onImageChange={setProfilePicture}
+                    size="lg"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Upload a photo from your phone or computer. This will be your character portrait.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="char-name">Character Name</Label>
                 <Input id="char-name" value={characterName} onChange={e => setCharacterName(e.target.value)} placeholder={displayName || username || "Your hero's name"} />
               </div>
 
               <div className="space-y-2">
-                <Label>Choose Avatar</Label>
+                <Label>Fallback Avatar</Label>
                 <div className="grid grid-cols-6 gap-2">
                   {AVATARS.map(a => (
                     <button

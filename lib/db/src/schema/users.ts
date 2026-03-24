@@ -8,6 +8,7 @@ export const usersTable = pgTable("users", {
   displayName: text("display_name").notNull(),
   passwordHash: text("password_hash").notNull(),
   avatar: text("avatar").notNull().default("⚔️"),
+  profilePicture: text("profile_picture"), // base64 data URL
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

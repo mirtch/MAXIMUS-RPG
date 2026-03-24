@@ -8,6 +8,7 @@ export const characterTable = pgTable("character", {
   userId: integer("user_id").references(() => usersTable.id),
   name: text("name").notNull().default("MAXIMUS"),
   avatar: text("avatar").notNull().default("⚔️"),
+  profilePicture: text("profile_picture"), // base64 data URL
   class: text("class").notNull().default("Warrior"),
   overallLevel: integer("overall_level").notNull().default(1),
   totalXp: integer("total_xp").notNull().default(0),

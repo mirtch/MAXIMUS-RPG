@@ -9,7 +9,7 @@ const router: IRouter = Router();
 
 // POST /api/auth/register
 router.post("/auth/register", async (req, res): Promise<void> => {
-  const { username, password, displayName, avatar, characterName, characterClass } = req.body;
+  const { username, password, displayName, avatar, profilePicture, characterName, characterClass } = req.body;
 
   if (!username || !password) {
     res.status(400).json({ error: "Username and password are required" });
@@ -40,6 +40,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     displayName: displayName || username,
     passwordHash,
     avatar: avatar || "⚔️",
+    profilePicture: profilePicture || null,
   }).returning();
 
   // Create character for the new user
@@ -47,6 +48,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     userId: user.id,
     name: characterName || user.displayName,
     avatar: avatar || "⚔️",
+    profilePicture: profilePicture || null,
     class: characterClass || "Warrior",
     overallLevel: 1,
     totalXp: 0,
@@ -68,7 +70,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const token = generateToken(user.id);
   res.status(201).json({
     token,
-    user: { id: user.id, username: user.username, displayName: user.displayName, avatar: user.avatar },
+    user: { id: user.id, username: user.username, displayName: user.displayName, avatar: user.avatar, profilePicture: user.profilePicture },
   });
 });
 
@@ -99,8 +101,30 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   const token = generateToken(user.id);
   res.json({
     token,
-    user: { id: user.id, username: user.username, displayName: user.displayName, avatar: user.avatar },
+    user: { id: user.id, username: user.username, displayName: user.displayName, avatar: user.avatar, profilePicture: user.profilePicture },
   });
+});
+
+// PATCH /api/auth/profile-picture — update profile picture
+router.patch("/auth/profile-picture", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
+  const { profilePicture } = req.body;
+
+  if (!profilePicture || typeof profilePicture !== "string") {
+    res.status(400).json({ error: "profilePicture (base64 data URL) is required" });
+    return;
+  }
+
+  // Limit to ~500KB base64
+  if (profilePicture.length > 500000) {
+    res.status(400).json({ error: "Image too large. Please use a smaller photo." });
+    return;
+  }
+
+  await db.update(usersTable).set({ profilePicture }).where(eq(usersTable.id, userId));
+  await db.update(characterTable).set({ profilePicture }).where(eq(characterTable.userId, userId));
+
+  res.json({ success: true });
 });
 
 // GET /api/auth/me — get current user info
@@ -116,6 +140,7 @@ router.get("/auth/me", requireAuth, async (req: AuthRequest, res): Promise<void>
     username: user.username,
     displayName: user.displayName,
     avatar: user.avatar,
+    profilePicture: user.profilePicture,
     lastSeenAt: user.lastSeenAt,
     createdAt: user.createdAt,
   });

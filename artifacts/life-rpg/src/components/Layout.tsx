@@ -71,8 +71,12 @@ export function Layout({ children }: LayoutProps) {
               </div>
             ) : (
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{(character as any).avatar || "⚔️"}</span>
+                <div className="flex items-center gap-3">
+                  {(character as any).profilePicture ? (
+                    <img src={(character as any).profilePicture} alt="" className="w-10 h-10 rounded-full object-cover border border-sidebar-border" />
+                  ) : (
+                    <span className="text-2xl">{(character as any).avatar || "⚔️"}</span>
+                  )}
                   <div>
                     <h2 className="text-xl font-bold tracking-tight text-sidebar-primary uppercase">
                       {character.name}

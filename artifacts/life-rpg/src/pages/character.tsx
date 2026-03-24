@@ -4,10 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function CharacterPage() {
-  const { data: character, isLoading: isCharLoading } = useGetCharacter();
+  const { data: character, isLoading: isCharLoading, refetch: refetchCharacter } = useGetCharacter();
   const { data: stats, isLoading: isStatsLoading } = useGetStats();
+  const { token } = useAuth();
+
+  const updateProfilePicture = async (dataUrl: string) => {
+    await fetch("/api/auth/profile-picture", {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ profilePicture: dataUrl }),
+    });
+    refetchCharacter();
+  };
 
   if (isCharLoading || !character || isStatsLoading || !stats) {
     return (
@@ -30,8 +42,15 @@ export default function CharacterPage() {
       <Card className="relative overflow-hidden border-2 border-primary/20 bg-card">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
         <CardContent className="p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 relative z-10">
-          <div className="w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-primary bg-secondary flex items-center justify-center shadow-[0_0_30px_rgba(234,179,8,0.3)]">
-            <span className="text-5xl md:text-7xl">🐺</span>
+          <div className="relative">
+            <div className="w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-primary bg-secondary flex items-center justify-center shadow-[0_0_30px_rgba(234,179,8,0.3)] overflow-hidden">
+              <ProfilePictureUpload
+                currentImage={(character as any).profilePicture}
+                fallbackEmoji={(character as any).avatar || "⚔️"}
+                onImageChange={updateProfilePicture}
+                size="lg"
+              />
+            </div>
           </div>
           
           <div className="flex-1 text-center md:text-left space-y-4 w-full">
