@@ -32,7 +32,7 @@ export const STAT_ICONS: Record<string, string> = {
   Stamina: "🏃",
   Athletics: "🏀",
   Intellect: "📚",
-  Focus: "🎯",
+  Wealth: "💰",
   Discipline: "⚔️",
   Health: "❤️",
   Charisma: "🗣️",

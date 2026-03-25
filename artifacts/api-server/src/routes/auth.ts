@@ -75,9 +75,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const CATEGORY_XP: Record<string, Array<{ statName: string; amount: number }>> = {
     fitness: [{ statName: "strength", amount: 35 }, { statName: "stamina", amount: 15 }],
     athletics: [{ statName: "athletics", amount: 40 }, { statName: "stamina", amount: 15 }],
-    intellect: [{ statName: "intellect", amount: 35 }, { statName: "focus", amount: 15 }],
-    focus: [{ statName: "focus", amount: 35 }, { statName: "discipline", amount: 15 }],
-    creativity: [{ statName: "creativity", amount: 35 }, { statName: "focus", amount: 15 }],
+    intellect: [{ statName: "intellect", amount: 35 }, { statName: "discipline", amount: 15 }],
+    wealth: [{ statName: "wealth", amount: 35 }, { statName: "discipline", amount: 15 }],
+    creativity: [{ statName: "creativity", amount: 35 }, { statName: "discipline", amount: 15 }],
     discipline: [{ statName: "discipline", amount: 25 }, { statName: "health", amount: 10 }],
     social: [{ statName: "charisma", amount: 25 }],
     health: [{ statName: "health", amount: 15 }],

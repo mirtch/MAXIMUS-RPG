@@ -13,10 +13,10 @@ import { Settings, Check } from "lucide-react";
 
 const CLASSES = [
   { value: "Warrior", icon: "⚔️", bonus: "+10% STR, STA, DIS" },
-  { value: "Scholar", icon: "📜", bonus: "+10% INT, FOC, CRE" },
-  { value: "Monk", icon: "🧘", bonus: "+10% FOC, DIS, HP" },
+  { value: "Scholar", icon: "📜", bonus: "+10% INT, DIS, CRE" },
+  { value: "Monk", icon: "🧘", bonus: "+10% WLT, DIS, HP" },
   { value: "Ranger", icon: "🏹", bonus: "+10% STA, ATH, HP" },
-  { value: "Artisan", icon: "🎭", bonus: "+10% CRE, CHA, FOC" },
+  { value: "Artisan", icon: "🎭", bonus: "+10% CRE, CHA, WLT" },
 ];
 
 export default function CharacterPage() {

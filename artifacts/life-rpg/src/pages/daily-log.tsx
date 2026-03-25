@@ -41,11 +41,11 @@ const CATEGORY_META: Record<string, { label: string; icon: string; color: string
 
 const STAT_OPTIONS = [
   "strength", "stamina", "athletics", "intellect",
-  "focus", "discipline", "health", "charisma", "creativity",
+  "wealth", "discipline", "health", "charisma", "creativity",
 ];
 
 const CATEGORY_OPTIONS = [
-  "fitness", "athletics", "intellect", "focus",
+  "fitness", "athletics", "intellect", "wealth",
   "creativity", "social", "discipline", "health", "custom",
 ];
 

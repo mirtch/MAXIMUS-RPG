@@ -11,7 +11,7 @@ const CATEGORY_XP: Record<string, { statName: string; amount: number }[]> = {
   book: [{ statName: "intellect", amount: 25 }],
   movie: [{ statName: "creativity", amount: 10 }],
   music: [{ statName: "creativity", amount: 5 }],
-  piano_piece: [{ statName: "creativity", amount: 50 }, { statName: "focus", amount: 20 }],
+  piano_piece: [{ statName: "creativity", amount: 50 }, { statName: "discipline", amount: 20 }],
   custom: [{ statName: "intellect", amount: 10 }],
 };
 
