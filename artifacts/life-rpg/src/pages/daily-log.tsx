@@ -216,6 +216,7 @@ export default function DailyLogPage() {
       {
         data: {
           completedActivityIds: [...selectedIds],
+          activityDurations: activityDurations.size > 0 ? Object.fromEntries(activityDurations) : undefined,
           sleepHours,
           phoneHours,
           notes: notes || undefined,
@@ -343,6 +344,13 @@ export default function DailyLogPage() {
                           onChange={e => setDuration(act.id, Number(e.target.value) || 0)}
                         />
                         <span className="text-xs text-muted-foreground">minutes</span>
+                        {(() => {
+                          const mins = activityDurations.get(act.id) || 0;
+                          if (mins >= 90) return <span className="text-xs text-primary font-bold">+75% XP</span>;
+                          if (mins >= 60) return <span className="text-xs text-primary font-bold">+50% XP</span>;
+                          if (mins >= 30) return <span className="text-xs text-primary font-bold">+25% XP</span>;
+                          return null;
+                        })()}
                       </div>
                     )}
                   </div>

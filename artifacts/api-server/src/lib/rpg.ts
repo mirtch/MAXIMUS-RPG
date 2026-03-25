@@ -115,8 +115,18 @@ export interface ActivityDef {
   xpRewards: XpReward[];
 }
 
+// Time-based XP multiplier: longer sessions = more XP
+export function getTimeMultiplier(minutes: number | undefined): number {
+  if (!minutes || minutes <= 0) return 1.0; // no time logged = base XP
+  if (minutes < 30) return 1.0;   // under 30 min = base
+  if (minutes < 60) return 1.25;  // 30-59 min = +25%
+  if (minutes < 90) return 1.5;   // 60-89 min = +50%
+  return 1.75;                     // 90+ min = +75%
+}
+
 export interface DailyLogInput {
   completedActivityIds: number[];
+  activityDurations?: Record<string, number>; // activityId → minutes
   sleepHours?: number;
   phoneHours?: number;
   notes?: string | null;
@@ -136,16 +146,20 @@ export function calculateXpChanges(
   const changes: XpChange[] = [];
   const activityMap = new Map(activityDefs.map(a => [a.id, a]));
 
-  // XP from completed activities (with class bonus)
+  // XP from completed activities (with class bonus + time multiplier)
   for (const actId of input.completedActivityIds) {
     const activity = activityMap.get(actId);
     if (!activity) continue;
+    const duration = input.activityDurations?.[String(actId)];
+    const timeMult = getTimeMultiplier(duration);
     for (const reward of activity.xpRewards) {
-      const amount = characterClass ? applyClassBonus(reward.amount, reward.statName, characterClass) : reward.amount;
+      let amount = Math.round(reward.amount * timeMult);
+      amount = characterClass ? applyClassBonus(amount, reward.statName, characterClass) : amount;
+      const timeLabel = duration ? ` (${duration}min)` : "";
       changes.push({
         statName: reward.statName,
         amount,
-        reason: activity.name,
+        reason: `${activity.name}${timeLabel}`,
       });
     }
   }
