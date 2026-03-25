@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useGetActivities, useSubmitDailyLog, useGetTodayLog, useCreateActivity } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useGetActivities, useSubmitDailyLog, useCreateActivity } from "@workspace/api-client-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { ClipboardList, Plus, X, Shield, Clock, AlertTriangle } from "lucide-react";
+import { ClipboardList, Plus, X, Shield, Clock, AlertTriangle, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -56,11 +56,39 @@ interface OneTimeActivity {
   xpRewards: Array<{ statName: string; amount: number }>;
 }
 
+function getResetHour(): number {
+  const stored = localStorage.getItem("maximus-rpg-reset-hour");
+  return stored ? Math.min(23, Math.max(0, parseInt(stored, 10) || 0)) : 0;
+}
+
+function formatResetTime(hour: number): string {
+  if (hour === 0) return "Midnight";
+  if (hour === 12) return "Noon";
+  return hour < 12 ? `${hour}:00 AM` : `${hour - 12}:00 PM`;
+}
+
 export default function DailyLogPage() {
   const queryClient = useQueryClient();
   const { token } = useAuth();
   const { toast } = useToast();
-  const { data: todayLog, isLoading: isLogLoading, isError: isLogError } = useGetTodayLog({ query: { retry: false } as any });
+
+  const [resetHour, setResetHour] = useState(getResetHour);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [pendingResetHour, setPendingResetHour] = useState(resetHour);
+
+  // Custom today-log query with resetHour support
+  const { data: todayLog, isLoading: isLogLoading } = useQuery({
+    queryKey: ["/api/daily-log/today", resetHour],
+    queryFn: async () => {
+      const res = await fetch(`/api/daily-log/today?resetHour=${resetHour}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    retry: false,
+  });
+
   const { data: activities, isLoading: isActivitiesLoading } = useGetActivities();
   const submitMutation = useSubmitDailyLog();
   const createActivityMutation = useCreateActivity();
@@ -75,6 +103,14 @@ export default function DailyLogPage() {
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [logResult, setLogResult] = useState<any>(null);
   const [customDialogOpen, setCustomDialogOpen] = useState(false);
+
+  function saveResetHour() {
+    localStorage.setItem("maximus-rpg-reset-hour", String(pendingResetHour));
+    setResetHour(pendingResetHour);
+    setResetDialogOpen(false);
+    queryClient.invalidateQueries({ queryKey: ["/api/daily-log/today"] });
+    toast({ title: "Day reset time updated", description: `Your day now resets at ${formatResetTime(pendingResetHour)}.` });
+  }
 
   // Custom activity form state
   const [customName, setCustomName] = useState("");
@@ -99,7 +135,9 @@ export default function DailyLogPage() {
         <Card className="border-primary/20 bg-card/80">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Log Submitted for Today!</CardTitle>
-            <CardDescription className="text-center">Come back tomorrow to log your next adventures.</CardDescription>
+            <CardDescription className="text-center">
+              Come back {resetHour === 0 ? "tomorrow" : `after ${formatResetTime(resetHour)}`} to log your next adventures.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -259,7 +297,16 @@ export default function DailyLogPage() {
           <h1 className="text-3xl font-black uppercase tracking-wider text-primary flex items-center gap-3">
             <ClipboardList className="w-8 h-8" /> Daily Log
           </h1>
-          <p className="text-muted-foreground">Record your actions. Face the consequences.</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-muted-foreground">Record your actions. Face the consequences.</p>
+            <button
+              onClick={() => { setPendingResetHour(resetHour); setResetDialogOpen(true); }}
+              className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              title={`Day resets at ${formatResetTime(resetHour)}`}
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
         <Button variant="outline" onClick={() => setCustomDialogOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" /> Custom Activity
@@ -616,6 +663,42 @@ export default function DailyLogPage() {
             <Button onClick={handleAddCustomActivity} disabled={!customName.trim()}>
               {customSaveForReuse ? "Save & Select" : "Add One-Time"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Time Settings Dialog */}
+      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <DialogContent className="sm:max-w-sm bg-background">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Day Reset Time</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Choose when your day resets. After this hour, you can start logging a new day.
+            </p>
+            <div className="space-y-2">
+              <Label>Reset Hour</Label>
+              <Select value={String(pendingResetHour)} onValueChange={(v) => setPendingResetHour(parseInt(v, 10))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 24 }, (_, h) => (
+                    <SelectItem key={h} value={String(h)}>{formatResetTime(h)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="bg-secondary/50 rounded-lg p-3 text-xs text-muted-foreground">
+              <Clock className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
+              {pendingResetHour === 0
+                ? "Default: your day resets at midnight."
+                : `Your day will run from ${formatResetTime(pendingResetHour)} to ${formatResetTime(pendingResetHour === 0 ? 23 : pendingResetHour - 1)}.`
+              }
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+            <Button onClick={saveResetHour}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

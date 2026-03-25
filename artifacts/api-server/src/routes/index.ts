@@ -17,6 +17,7 @@ import groupQuestsRouter from "./groupQuests";
 import lifeLogRouter from "./lifeLog";
 import challengesRouter from "./challenges";
 import weeklyRecapRouter from "./weeklyRecap";
+import timelineRouter from "./timeline";
 
 const router: IRouter = Router();
 
@@ -41,5 +42,6 @@ router.use(groupQuestsRouter);
 router.use(lifeLogRouter);
 router.use(challengesRouter);
 router.use(weeklyRecapRouter);
+router.use(timelineRouter);
 
 export default router;

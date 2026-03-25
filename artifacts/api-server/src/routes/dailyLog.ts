@@ -6,16 +6,22 @@ import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
-function startOfDay(date: Date): Date {
+function startOfDay(date: Date, resetHour = 0): Date {
   const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
+  // If current time is before resetHour, the "day" started yesterday at resetHour
+  if (d.getHours() < resetHour) {
+    d.setDate(d.getDate() - 1);
+  }
+  d.setHours(resetHour, 0, 0, 0);
   return d;
 }
 
-function endOfDay(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  return d;
+function endOfDay(date: Date, resetHour = 0): Date {
+  const start = startOfDay(date, resetHour);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  end.setMilliseconds(-1); // resetHour next day minus 1ms
+  return end;
 }
 
 router.get("/daily-log", requireAuth, async (req: AuthRequest, res): Promise<void> => {
@@ -27,9 +33,10 @@ router.get("/daily-log", requireAuth, async (req: AuthRequest, res): Promise<voi
 
 router.get("/daily-log/today", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const userId = req.userId!;
+  const resetHour = req.query.resetHour ? Math.min(23, Math.max(0, parseInt(req.query.resetHour as string, 10) || 0)) : 0;
   const now = new Date();
-  const todayStart = startOfDay(now);
-  const todayEnd = endOfDay(now);
+  const todayStart = startOfDay(now, resetHour);
+  const todayEnd = endOfDay(now, resetHour);
 
   const logs = await db.select().from(dailyLogTable).where(eq(dailyLogTable.userId, userId)).orderBy(desc(dailyLogTable.date)).limit(1);
   const todayLog = logs.find(l => {

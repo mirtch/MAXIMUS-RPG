@@ -30,6 +30,7 @@ import {
   Shield,
   BookOpen,
   Target,
+  GitBranch,
   LogOut,
 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
@@ -49,6 +50,7 @@ const navItems = [
   { name: "Punishments", path: "/punishments", icon: ShieldAlert },
   { name: "Achievements", path: "/achievements", icon: Trophy },
   { name: "Boss Fights", path: "/boss-fights", icon: Swords },
+  { name: "Timeline", path: "/timeline", icon: GitBranch },
   { name: "Life Log", path: "/life-log", icon: BookOpen },
   { name: "Challenges", path: "/challenges", icon: Target },
   { name: "Friends", path: "/friends", icon: Users },

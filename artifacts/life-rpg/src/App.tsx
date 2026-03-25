@@ -22,6 +22,7 @@ import FriendsPage from "@/pages/friends";
 import GroupQuestsPage from "@/pages/group-quests";
 import LifeLogPage from "@/pages/life-log";
 import ChallengesPage from "@/pages/challenges";
+import TimelinePage from "@/pages/timeline";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ function GameRouter() {
       <Route path="/save-game" component={SaveGamePage} />
       <Route path="/friends" component={FriendsPage} />
       <Route path="/group-quests" component={GroupQuestsPage} />
+      <Route path="/timeline" component={TimelinePage} />
       <Route path="/life-log" component={LifeLogPage} />
       <Route path="/challenges" component={ChallengesPage} />
       <Route component={NotFound} />
