@@ -13,6 +13,7 @@ export const activitiesTable = pgTable("activities", {
   xpRewards: jsonb("xp_rewards").notNull().default([]),
   isCore: boolean("is_core").notNull().default(false),
   isReusable: boolean("is_reusable").notNull().default(true),
+  isMustDo: boolean("is_must_do").notNull().default(false),
   archived: boolean("archived").notNull().default(false),
   sortOrder: integer("sort_order").notNull().default(100),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

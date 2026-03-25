@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useGetActivities, useSubmitDailyLog, useGetTodayLog, useCreateActivity } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, Plus, X } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { ClipboardList, Plus, X, Shield, Clock, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -57,6 +58,7 @@ interface OneTimeActivity {
 
 export default function DailyLogPage() {
   const queryClient = useQueryClient();
+  const { token } = useAuth();
   const { toast } = useToast();
   const { data: todayLog, isLoading: isLogLoading, isError: isLogError } = useGetTodayLog({ query: { retry: false } as any });
   const { data: activities, isLoading: isActivitiesLoading } = useGetActivities();
@@ -64,6 +66,7 @@ export default function DailyLogPage() {
   const createActivityMutation = useCreateActivity();
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [activityDurations, setActivityDurations] = useState<Map<number, number>>(new Map());
   const [sleepHours, setSleepHours] = useState(7);
   const [phoneHours, setPhoneHours] = useState(2);
   const [notes, setNotes] = useState("");
@@ -126,11 +129,32 @@ export default function DailyLogPage() {
   function toggleActivity(id: number) {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        setActivityDurations(prev => { const m = new Map(prev); m.delete(id); return m; });
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }
+
+  function setDuration(id: number, mins: number) {
+    setActivityDurations(prev => new Map(prev).set(id, mins));
+  }
+
+  async function toggleMustDo(id: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    await fetch(`/api/activities/${id}/must-do`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+  }
+
+  // Calculate missed must-do's
+  const mustDoActivities = (activities || []).filter((a: any) => a.isMustDo);
+  const missedMustDos = mustDoActivities.filter((a: any) => !selectedIds.has(a.id));
 
   function addCustomRewardRow() {
     setCustomRewards(prev => [...prev, { statName: "discipline", amount: 10 }]);
@@ -258,38 +282,72 @@ export default function DailyLogPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {groupActivities.map((act) => (
-                <div
-                  key={act.id}
-                  className={`flex flex-row items-start space-x-3 p-4 rounded-lg border transition-colors cursor-pointer ${
-                    selectedIds.has(act.id)
-                      ? isPenalty
-                        ? "bg-destructive/10 border-destructive/50"
-                        : "bg-primary/10 border-primary/50"
-                      : "bg-secondary/50 border-border hover:border-primary/30"
-                  }`}
-                  onClick={() => toggleActivity(act.id)}
-                >
-                  <Checkbox
-                    checked={selectedIds.has(act.id)}
-                    onCheckedChange={() => toggleActivity(act.id)}
-                    className={isPenalty ? "border-destructive data-[state=checked]:bg-destructive" : ""}
-                  />
-                  <div>
-                    <div className={`font-medium ${isPenalty ? "text-destructive" : ""}`}>{act.displayName}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {(act.xpRewards as Array<{ statName: string; amount: number }>).map((r, i) => (
-                        <span key={i} className={r.amount > 0 ? "text-primary" : "text-destructive"}>
-                          {r.amount > 0 ? "+" : ""}{r.amount} {r.statName}{i < (act.xpRewards as any[]).length - 1 ? ", " : ""}
-                        </span>
-                      ))}
+              {groupActivities.map((act) => {
+                const isMustDo = (act as any).isMustDo;
+                const isSelected = selectedIds.has(act.id);
+                return (
+                  <div key={act.id} className="space-y-2">
+                    <div
+                      className={`flex flex-row items-start space-x-3 p-4 rounded-lg border transition-colors cursor-pointer ${
+                        isSelected
+                          ? isPenalty
+                            ? "bg-destructive/10 border-destructive/50"
+                            : "bg-primary/10 border-primary/50"
+                          : isMustDo && !isSelected
+                            ? "bg-orange-500/5 border-orange-500/30"
+                            : "bg-secondary/50 border-border hover:border-primary/30"
+                      }`}
+                      onClick={() => toggleActivity(act.id)}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleActivity(act.id)}
+                        className={isPenalty ? "border-destructive data-[state=checked]:bg-destructive" : ""}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={`font-medium ${isPenalty ? "text-destructive" : ""}`}>{act.displayName}</span>
+                          {isMustDo && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-500 font-bold uppercase">must-do</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {(act.xpRewards as Array<{ statName: string; amount: number }>).map((r, i) => (
+                            <span key={i} className={r.amount > 0 ? "text-primary" : "text-destructive"}>
+                              {r.amount > 0 ? "+" : ""}{r.amount} {r.statName}{i < (act.xpRewards as any[]).length - 1 ? ", " : ""}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {!act.isCore && <span className="text-xs text-muted-foreground/60 italic">custom</span>}
+                          <button
+                            onClick={(e) => toggleMustDo(act.id, e)}
+                            className={`text-[10px] flex items-center gap-0.5 ${isMustDo ? "text-orange-500" : "text-muted-foreground/50 hover:text-muted-foreground"}`}
+                          >
+                            <Shield className="w-3 h-3" />
+                            {isMustDo ? "remove must-do" : "set must-do"}
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    {!act.isCore && (
-                      <span className="text-xs text-muted-foreground/60 italic">custom</span>
+                    {isSelected && (
+                      <div className="flex items-center gap-2 pl-7" onClick={e => e.stopPropagation()}>
+                        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                        <input
+                          type="number"
+                          placeholder="min"
+                          min={0}
+                          max={480}
+                          className="w-16 h-7 text-xs text-center rounded border border-border bg-secondary/50 focus:border-primary outline-none"
+                          value={activityDurations.get(act.id) || ""}
+                          onChange={e => setDuration(act.id, Number(e.target.value) || 0)}
+                        />
+                        <span className="text-xs text-muted-foreground">minutes</span>
+                      </div>
                     )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         );
@@ -382,6 +440,28 @@ export default function DailyLogPage() {
           />
         </CardContent>
       </Card>
+
+      {/* Must-do warning */}
+      {missedMustDos.length > 0 && (
+        <Card className="border-orange-500/50 bg-orange-500/5 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold text-orange-500 text-sm">Must-Do Activities Not Completed</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Submitting without these will cost you <span className="text-orange-500 font-bold">-15 XP each</span>:
+              </p>
+              <div className="flex gap-1 flex-wrap mt-2">
+                {missedMustDos.map((a: any) => (
+                  <span key={a.id} className="text-xs px-2 py-1 rounded bg-orange-500/10 text-orange-500 border border-orange-500/20">
+                    {a.displayName}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Button
         size="lg"

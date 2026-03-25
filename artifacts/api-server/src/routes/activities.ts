@@ -78,4 +78,23 @@ router.post("/activities/seed", requireAuth, async (req: AuthRequest, res): Prom
   res.json({ seeded: toInsert.length, total: all.length, activities: all });
 });
 
+// PATCH /activities/:id/must-do — toggle must-do status
+router.patch("/activities/:id/must-do", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
+  const id = parseInt(req.params.id as string, 10);
+  const [activity] = await db.select().from(activitiesTable).where(and(eq(activitiesTable.id, id), eq(activitiesTable.userId, userId)));
+
+  if (!activity) {
+    res.status(404).json({ error: "Activity not found" });
+    return;
+  }
+
+  const [updated] = await db.update(activitiesTable)
+    .set({ isMustDo: !activity.isMustDo })
+    .where(eq(activitiesTable.id, id))
+    .returning();
+
+  res.json(updated);
+});
+
 export default router;

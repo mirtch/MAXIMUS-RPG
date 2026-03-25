@@ -85,6 +85,27 @@ router.post("/daily-log", requireAuth, async (req: AuthRequest, res): Promise<vo
     char?.class,
   );
 
+  // Must-do penalties: check for activities marked as must-do that weren't completed
+  const allUserActivities = await db.select().from(activitiesTable).where(and(eq(activitiesTable.userId, userId), eq(activitiesTable.archived, false)));
+  const mustDoActivities = allUserActivities.filter(a => a.isMustDo);
+  const completedIdSet = new Set(allActivityIds);
+  const missedMustDos: string[] = [];
+
+  for (const mustDo of mustDoActivities) {
+    if (!completedIdSet.has(mustDo.id)) {
+      missedMustDos.push(mustDo.displayName);
+      // Apply penalty: -15 XP to the primary stat of the activity
+      const rewards = mustDo.xpRewards as Array<{ statName: string; amount: number }>;
+      if (rewards.length > 0) {
+        xpChanges.push({
+          statName: rewards[0].statName,
+          amount: -15,
+          reason: `Missed must-do: ${mustDo.displayName}`,
+        });
+      }
+    }
+  }
+
   const levelUps: Array<{ statName: string; newLevel: number; newTitle: string }> = [];
   const statUpdates: Record<string, { oldLevel: number; newXp: number; newLevel: number; newTitle: string }> = {};
   const allStats = await db.select().from(statsTable).where(eq(statsTable.userId, userId));
