@@ -32,6 +32,7 @@ export * from "./sideQuest";
 export * from "./stat";
 export * from "./streak";
 export * from "./submitDailyLogBody";
+export * from "./submitDailyLogBodyActivityDurations";
 export * from "./updateCharacterBody";
 export * from "./xpChange";
 export * from "./xpGain";

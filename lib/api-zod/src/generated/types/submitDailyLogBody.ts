@@ -6,10 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { OneTimeActivity } from "./oneTimeActivity";
+import type { SubmitDailyLogBodyActivityDurations } from "./submitDailyLogBodyActivityDurations";
 
 export interface SubmitDailyLogBody {
   /** IDs of activities completed today */
   completedActivityIds: number[];
+  /** Map of activity ID to minutes spent */
+  activityDurations?: SubmitDailyLogBodyActivityDurations;
   sleepHours?: number;
   phoneHours?: number;
   /** @nullable */

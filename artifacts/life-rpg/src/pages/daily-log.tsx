@@ -297,16 +297,15 @@ export default function DailyLogPage() {
           <h1 className="text-3xl font-black uppercase tracking-wider text-primary flex items-center gap-3">
             <ClipboardList className="w-8 h-8" /> Daily Log
           </h1>
-          <div className="flex items-center gap-2 mt-1">
-            <p className="text-muted-foreground">Record your actions. Face the consequences.</p>
-            <button
-              onClick={() => { setPendingResetHour(resetHour); setResetDialogOpen(true); }}
-              className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-              title={`Day resets at ${formatResetTime(resetHour)}`}
-            >
-              <Settings className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <p className="text-muted-foreground">Record your actions. Face the consequences.</p>
+          <button
+            onClick={() => { setPendingResetHour(resetHour); setResetDialogOpen(true); }}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-primary transition-colors mt-1 group"
+            title={`Day resets at ${formatResetTime(resetHour)}`}
+          >
+            <Settings className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-300" />
+            <span>Resets at {formatResetTime(resetHour)}</span>
+          </button>
         </div>
         <Button variant="outline" onClick={() => setCustomDialogOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" /> Custom Activity

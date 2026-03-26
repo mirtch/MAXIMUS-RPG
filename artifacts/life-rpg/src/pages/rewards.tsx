@@ -20,7 +20,7 @@ export default function RewardsPage() {
   };
 
   const handleUseReward = (id: number) => {
-    useRewardMutation.mutate(id, {
+    useRewardMutation.mutate({ id }, {
       onSuccess: () => {
         queryClient.invalidateQueries();
       }

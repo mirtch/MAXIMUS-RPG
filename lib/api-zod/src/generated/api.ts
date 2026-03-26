@@ -224,6 +224,10 @@ export const SubmitDailyLogBody = zod.object({
   completedActivityIds: zod
     .array(zod.number())
     .describe("IDs of activities completed today"),
+  activityDurations: zod
+    .record(zod.string(), zod.number())
+    .optional()
+    .describe("Map of activity ID to minutes spent"),
   sleepHours: zod.number().optional(),
   phoneHours: zod.number().optional(),
   notes: zod.string().nullish(),

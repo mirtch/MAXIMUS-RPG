@@ -55,6 +55,22 @@ router.get("/daily-log/today", requireAuth, async (req: AuthRequest, res): Promi
 router.post("/daily-log", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const userId = req.userId!;
   const input: DailyLogInput = req.body;
+
+  // Prevent duplicate submission for the same day
+  const resetHour = req.query.resetHour ? Math.min(23, Math.max(0, parseInt(req.query.resetHour as string, 10) || 0)) : 0;
+  const now = new Date();
+  const dayStart = startOfDay(now, resetHour);
+  const dayEnd = endOfDay(now, resetHour);
+  const existingLogs = await db.select().from(dailyLogTable).where(eq(dailyLogTable.userId, userId)).orderBy(desc(dailyLogTable.date)).limit(1);
+  const alreadyLogged = existingLogs.find(l => {
+    const d = new Date(l.date);
+    return d >= dayStart && d <= dayEnd;
+  });
+  if (alreadyLogged) {
+    res.status(409).json({ error: "Daily log already submitted for today" });
+    return;
+  }
+
   const allActivityIds = [...(input.completedActivityIds || [])];
 
   if (input.oneTimeActivities && input.oneTimeActivities.length > 0) {
@@ -230,8 +246,8 @@ router.post("/daily-log", requireAuth, async (req: AuthRequest, res): Promise<vo
     date: today,
     completedActivityIds: allActivityIds,
     activities: activityNames,
-    sleepHours: input.sleepHours ?? null,
-    phoneHours: input.phoneHours ?? null,
+    sleepHours: input.sleepHours != null ? Math.round(input.sleepHours) : null,
+    phoneHours: input.phoneHours != null ? Math.round(input.phoneHours) : null,
     totalXpGained,
     totalXpLost,
     xpChanges,

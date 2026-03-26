@@ -12,7 +12,7 @@ export default function PunishmentsPage() {
   const completeMutation = useCompletePunishment();
 
   const handleComplete = (id: number) => {
-    completeMutation.mutate(id, {
+    completeMutation.mutate({ id }, {
       onSuccess: () => queryClient.invalidateQueries()
     });
   };

@@ -783,6 +783,11 @@ components:
           items:
             type: integer
           description: IDs of activities completed today
+        activityDurations:
+          type: object
+          additionalProperties:
+            type: number
+          description: Map of activity ID to minutes spent
         sleepHours:
           type: number
         phoneHours:

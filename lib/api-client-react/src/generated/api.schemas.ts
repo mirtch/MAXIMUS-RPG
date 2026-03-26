@@ -120,9 +120,16 @@ export interface DailyLog {
   createdAt: string;
 }
 
+/**
+ * Map of activity ID to minutes spent
+ */
+export type SubmitDailyLogBodyActivityDurations = { [key: string]: number };
+
 export interface SubmitDailyLogBody {
   /** IDs of activities completed today */
   completedActivityIds: number[];
+  /** Map of activity ID to minutes spent */
+  activityDurations?: SubmitDailyLogBodyActivityDurations;
   sleepHours?: number;
   phoneHours?: number;
   /** @nullable */

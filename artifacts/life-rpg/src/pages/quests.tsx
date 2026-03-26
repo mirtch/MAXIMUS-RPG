@@ -133,7 +133,7 @@ export default function QuestsPage() {
                         </div>
                       ) : (
                         <Button 
-                          onClick={() => completeDailyMutation.mutate(quest.id, { onSuccess: () => queryClient.invalidateQueries() })}
+                          onClick={() => completeDailyMutation.mutate({ id: quest.id }, { onSuccess: () => queryClient.invalidateQueries() })}
                           disabled={completeDailyMutation.isPending}
                           className="w-full font-bold"
                         >
@@ -217,7 +217,7 @@ export default function QuestsPage() {
                   ) : (
                     <Button 
                       className="w-full" variant="outline"
-                      onClick={() => completeSideMutation.mutate(quest.id, { onSuccess: () => queryClient.invalidateQueries() })}
+                      onClick={() => completeSideMutation.mutate({ id: quest.id }, { onSuccess: () => queryClient.invalidateQueries() })}
                       disabled={completeSideMutation.isPending}
                     >
                       Mark Complete
@@ -285,7 +285,7 @@ export default function QuestsPage() {
                       </div>
                     ) : (
                       <Button 
-                        onClick={() => completeMainMutation.mutate(quest.id, { onSuccess: () => queryClient.invalidateQueries() })}
+                        onClick={() => completeMainMutation.mutate({ id: quest.id }, { onSuccess: () => queryClient.invalidateQueries() })}
                         disabled={completeMainMutation.isPending}
                         className="bg-accent hover:bg-accent/80 w-full"
                       >

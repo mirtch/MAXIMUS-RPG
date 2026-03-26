@@ -28,15 +28,15 @@ export function calculateStatLevelInfo(statLevel: number, statXp: number) {
 }
 
 export const STAT_ICONS: Record<string, string> = {
-  Strength: "💪",
-  Stamina: "🏃",
-  Athletics: "🏀",
-  Intellect: "📚",
-  Wealth: "💰",
-  Discipline: "⚔️",
-  Health: "❤️",
-  Charisma: "🗣️",
-  Creativity: "🎹"
+  strength: "💪",
+  stamina: "🏃",
+  athletics: "🏀",
+  intellect: "📚",
+  wealth: "💰",
+  discipline: "⚔️",
+  health: "❤️",
+  charisma: "🗣️",
+  creativity: "🎹",
 };
 
 export function getStatBadge(level: number): string {
