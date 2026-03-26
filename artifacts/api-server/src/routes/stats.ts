@@ -1,14 +1,32 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, statsTable, characterTable } from "@workspace/db";
-import { getLevelFromXp, getTitleForLevel, getOverallTitleFromLevel, applyClassBonus } from "../lib/rpg.js";
+import { getLevelFromXp, getTitleForLevel, getOverallTitleFromLevel, applyClassBonus, STAT_NAMES, STAT_DISPLAY_NAMES } from "../lib/rpg.js";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
 router.get("/stats", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const userId = req.userId!;
-  const stats = await db.select().from(statsTable).where(eq(statsTable.userId, userId)).orderBy(statsTable.name);
+  let stats = await db.select().from(statsTable).where(eq(statsTable.userId, userId)).orderBy(statsTable.name);
+
+  // Auto-create any missing stats (e.g. "family" added after user registered)
+  const existingNames = new Set(stats.map(s => s.name));
+  const missing = STAT_NAMES.filter(name => !existingNames.has(name));
+  if (missing.length > 0) {
+    for (const name of missing) {
+      await db.insert(statsTable).values({
+        userId,
+        name,
+        displayName: STAT_DISPLAY_NAMES[name],
+        xp: 0,
+        level: 1,
+        title: "Novice",
+      });
+    }
+    stats = await db.select().from(statsTable).where(eq(statsTable.userId, userId)).orderBy(statsTable.name);
+  }
+
   res.json(stats);
 });
 

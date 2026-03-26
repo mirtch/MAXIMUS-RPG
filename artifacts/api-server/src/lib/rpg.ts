@@ -8,6 +8,7 @@ export const STAT_NAMES = [
   "health",
   "charisma",
   "creativity",
+  "family",
 ] as const;
 
 export type StatName = (typeof STAT_NAMES)[number];
@@ -22,6 +23,7 @@ export const STAT_DISPLAY_NAMES: Record<StatName, string> = {
   health: "Health",
   charisma: "Charisma",
   creativity: "Creativity",
+  family: "Family",
 };
 
 export const LEVEL_TITLES: Record<number, string> = {
@@ -93,7 +95,7 @@ export interface XpReward {
 export const CLASS_BONUSES: Record<string, string[]> = {
   Warrior: ["strength", "stamina", "discipline"],
   Scholar: ["intellect", "discipline", "creativity"],
-  Monk: ["wealth", "discipline", "health"],
+  Monk: ["wealth", "discipline", "health", "family"],
   Ranger: ["stamina", "athletics", "health"],
   Artisan: ["creativity", "charisma", "wealth"],
 };
@@ -291,7 +293,7 @@ export const DAILY_QUEST_POOL = [
   { title: "Talk to Someone New", description: "Start a conversation with someone you don't know", xpReward: 30, statReward: "charisma" },
   { title: "Talk to a Stranger", description: "Initiate a conversation with a complete stranger", xpReward: 35, statReward: "charisma" },
   { title: "Give 3 Compliments", description: "Give genuine compliments to 3 different people", xpReward: 25, statReward: "charisma" },
-  { title: "Call a Friend or Family", description: "Call someone you care about", xpReward: 20, statReward: "charisma" },
+  { title: "Call a Friend", description: "Call a friend you care about", xpReward: 20, statReward: "charisma" },
   { title: "10 Min Conversation", description: "Have a meaningful 10-minute conversation", xpReward: 20, statReward: "charisma" },
   { title: "Talk to Someone You Usually Don't", description: "Reach out to someone outside your usual circle", xpReward: 25, statReward: "charisma" },
   { title: "Eye Contact All Day", description: "Maintain eye contact in every conversation today", xpReward: 25, statReward: "charisma" },
@@ -330,4 +332,16 @@ export const DAILY_QUEST_POOL = [
   { title: "Organize Work/Study Files", description: "Clean up and organize your workspace or files", xpReward: 15, statReward: "wealth" },
   { title: "Plan Your Career 20 Min", description: "Plan concrete career steps for the next month", xpReward: 25, statReward: "wealth" },
   { title: "Budget or Track Expenses", description: "Review your budget or track all expenses today", xpReward: 20, statReward: "wealth" },
+
+  // ── Family ──
+  { title: "Call a Family Member", description: "Call a parent, sibling, or relative", xpReward: 25, statReward: "family" },
+  { title: "Family Dinner", description: "Eat a meal together with family", xpReward: 30, statReward: "family" },
+  { title: "Help a Family Member", description: "Help someone in your family with something they need", xpReward: 25, statReward: "family" },
+  { title: "Cook for Your Family", description: "Prepare a meal for your family", xpReward: 30, statReward: "family" },
+  { title: "Family Activity", description: "Do something fun together — game, walk, outing", xpReward: 35, statReward: "family" },
+  { title: "Check In on a Relative", description: "Text or call a relative you haven't talked to recently", xpReward: 20, statReward: "family" },
+  { title: "Listen to a Family Story", description: "Ask a parent or grandparent to share a memory", xpReward: 25, statReward: "family" },
+  { title: "Clean or Fix Something at Home", description: "Do a chore or repair around the house for the family", xpReward: 20, statReward: "family" },
+  { title: "Say Thank You to Family", description: "Express genuine gratitude to a family member", xpReward: 15, statReward: "family" },
+  { title: "Teach a Family Member Something", description: "Share a skill or knowledge with someone in your family", xpReward: 30, statReward: "family" },
 ];

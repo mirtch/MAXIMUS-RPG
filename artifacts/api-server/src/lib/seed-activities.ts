@@ -129,6 +129,20 @@ export const CORE_ACTIVITIES: InsertActivity[] = [
     xpRewards: [{ statName: "wealth", amount: 25 }, { statName: "discipline", amount: 10 }],
     isCore: true, isReusable: true, archived: false, sortOrder: 66 },
 
+  // ── Family ──
+  { name: "familyTime", displayName: "Family Time", description: "Quality time spent with family", category: "family",
+    xpRewards: [{ statName: "family", amount: 30 }, { statName: "health", amount: 10 }],
+    isCore: true, isReusable: true, archived: false, sortOrder: 70 },
+  { name: "familyCall", displayName: "Called Family", description: "Called a parent, sibling, or relative", category: "family",
+    xpRewards: [{ statName: "family", amount: 20 }],
+    isCore: true, isReusable: true, archived: false, sortOrder: 71 },
+  { name: "familyMeal", displayName: "Family Meal", description: "Shared a meal with family", category: "family",
+    xpRewards: [{ statName: "family", amount: 25 }, { statName: "health", amount: 5 }],
+    isCore: true, isReusable: true, archived: false, sortOrder: 72 },
+  { name: "familyHelp", displayName: "Helped Family", description: "Helped a family member with something", category: "family",
+    xpRewards: [{ statName: "family", amount: 25 }, { statName: "discipline", amount: 10 }],
+    isCore: true, isReusable: true, archived: false, sortOrder: 73 },
+
   // ── Bad habits (penalties) ──
   { name: "junkFood", displayName: "Ate Junk Food", description: "Ate junk food (penalty)", category: "bad_habit",
     xpRewards: [{ statName: "health", amount: -20 }, { statName: "discipline", amount: -10 }],

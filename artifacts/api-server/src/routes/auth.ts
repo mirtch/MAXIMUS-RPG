@@ -80,6 +80,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     creativity: [{ statName: "creativity", amount: 35 }, { statName: "discipline", amount: 15 }],
     discipline: [{ statName: "discipline", amount: 25 }, { statName: "health", amount: 10 }],
     social: [{ statName: "charisma", amount: 25 }],
+    family: [{ statName: "family", amount: 30 }, { statName: "health", amount: 10 }],
     health: [{ statName: "health", amount: 15 }],
     bad_habit: [{ statName: "health", amount: -20 }, { statName: "discipline", amount: -10 }],
   };

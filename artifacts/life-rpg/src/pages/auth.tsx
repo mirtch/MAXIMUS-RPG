@@ -76,6 +76,12 @@ const ACTIVITY_CATALOG = [
     { name: "networking", displayName: "Networking", desc: "Professional networking" },
     { name: "volunteering", displayName: "Volunteering", desc: "Community service or volunteering" },
   ]},
+  { category: "Family", icon: "👨‍👩‍👧‍👦", activities: [
+    { name: "familyTime", displayName: "Family Time", desc: "Quality time spent with family" },
+    { name: "familyCall", displayName: "Called Family", desc: "Called a parent, sibling, or relative" },
+    { name: "familyMeal", displayName: "Family Meal", desc: "Shared a meal with family" },
+    { name: "familyHelp", displayName: "Helped Family", desc: "Helped a family member with something" },
+  ]},
   { category: "Health", icon: "❤️", activities: [
     { name: "drankWater", displayName: "Drank 3L Water", desc: "Stayed hydrated (3L+)" },
     { name: "healthyMeal", displayName: "Healthy Meal Prep", desc: "Cooked a healthy meal" },

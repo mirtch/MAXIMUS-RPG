@@ -37,6 +37,7 @@ export const STAT_ICONS: Record<string, string> = {
   health: "❤️",
   charisma: "🗣️",
   creativity: "🎹",
+  family: "👨‍👩‍👧‍👦",
 };
 
 export function getStatBadge(level: number): string {

@@ -35,18 +35,19 @@ const CATEGORY_META: Record<string, { label: string; icon: string; color: string
   social: { label: "Creative & Social", icon: "\u{1F3B9}", color: "purple" },
   discipline: { label: "Daily Habits", icon: "\u{2728}", color: "emerald" },
   health: { label: "Daily Habits", icon: "\u{2728}", color: "emerald" },
+  family: { label: "Family", icon: "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}\u{200D}\u{1F466}", color: "pink" },
   bad_habit: { label: "Penalties", icon: "\u{26A0}\u{FE0F}", color: "destructive" },
   custom: { label: "Custom", icon: "\u{1F3AF}", color: "orange" },
 };
 
 const STAT_OPTIONS = [
   "strength", "stamina", "athletics", "intellect",
-  "wealth", "discipline", "health", "charisma", "creativity",
+  "wealth", "discipline", "health", "charisma", "creativity", "family",
 ];
 
 const CATEGORY_OPTIONS = [
   "fitness", "athletics", "intellect", "wealth",
-  "creativity", "social", "discipline", "health", "custom",
+  "creativity", "social", "discipline", "health", "family", "custom",
 ];
 
 interface OneTimeActivity {
