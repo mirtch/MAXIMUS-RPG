@@ -6,22 +6,34 @@ import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
-function todayStart(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
+function parseResetHour(raw: unknown): number {
+  if (!raw) return 0;
+  return Math.min(23, Math.max(0, parseInt(String(raw), 10) || 0));
+}
+
+function startOfDay(date: Date, resetHour = 0): Date {
+  const d = new Date(date);
+  if (d.getHours() < resetHour) {
+    d.setDate(d.getDate() - 1);
+  }
+  d.setHours(resetHour, 0, 0, 0);
   return d;
 }
 
-function todayEnd(): Date {
-  const d = new Date();
-  d.setHours(23, 59, 59, 999);
-  return d;
+function endOfDay(date: Date, resetHour = 0): Date {
+  const start = startOfDay(date, resetHour);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  end.setMilliseconds(-1);
+  return end;
 }
 
 router.get("/quests/daily", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const userId = req.userId!;
-  const start = todayStart();
-  const end = todayEnd();
+  const resetHour = parseResetHour(req.query.resetHour);
+  const now = new Date();
+  const start = startOfDay(now, resetHour);
+  const end = endOfDay(now, resetHour);
   const quests = await db.select().from(dailyQuestsTable).where(eq(dailyQuestsTable.userId, userId)).orderBy(dailyQuestsTable.createdAt);
   const todayQuests = quests.filter(q => {
     const d = new Date(q.date);
@@ -32,11 +44,11 @@ router.get("/quests/daily", requireAuth, async (req: AuthRequest, res): Promise<
 
 router.post("/quests/daily/generate", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const userId = req.userId!;
+  const resetHour = parseResetHour(req.query.resetHour);
   const shuffled = [...DAILY_QUEST_POOL].sort(() => Math.random() - 0.5);
   const selected = shuffled.slice(0, 3);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = startOfDay(new Date(), resetHour);
 
   const created = [];
   for (const quest of selected) {

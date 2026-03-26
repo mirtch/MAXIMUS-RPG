@@ -1,10 +1,10 @@
 import { useState } from "react";
 import {
-  useGetDailyQuests, useCompleteDailyQuest, useGenerateDailyQuests,
+  useCompleteDailyQuest, useGenerateDailyQuests,
   useGetSideQuests, useCompleteSideQuest, useCreateSideQuest,
   useGetMainQuests, useCompleteMainQuest, useCreateMainQuest
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -22,16 +22,33 @@ import {
 import { Scroll, CheckCircle2, Clock, Sword, Plus } from "lucide-react";
 import { STAT_ICONS } from "@/lib/xp";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+
+function getResetHour(): number {
+  const stored = localStorage.getItem("maximus-rpg-reset-hour");
+  return stored ? Math.min(23, Math.max(0, parseInt(stored, 10) || 0)) : 0;
+}
 
 export default function QuestsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { token } = useAuth();
+  const resetHour = getResetHour();
 
   // Track which quest is currently being completed
   const [completingId, setCompletingId] = useState<number | null>(null);
 
-  // Daily Quests
-  const { data: dailyQuests } = useGetDailyQuests();
+  // Daily Quests — custom query with resetHour support
+  const { data: dailyQuests } = useQuery<Array<{ id: number; title: string; description: string; xpReward: number; statReward: string; completed: boolean; date: string; completedAt: string | null }>>({
+    queryKey: ["/api/quests/daily", resetHour],
+    queryFn: async () => {
+      const res = await fetch(`/api/quests/daily?resetHour=${resetHour}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
   const completeDailyMutation = useCompleteDailyQuest();
   const generateDailyMutation = useGenerateDailyQuests();
 
@@ -55,10 +72,16 @@ export default function QuestsPage() {
     defaultValues: { title: "", description: "", xpReward: 500 }
   });
 
-  const handleGenerateDaily = () => {
-    generateDailyMutation.mutate(undefined, {
-      onSuccess: () => queryClient.invalidateQueries()
+  const handleGenerateDaily = async () => {
+    const res = await fetch(`/api/quests/daily/generate?resetHour=${resetHour}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
     });
+    if (res.ok) {
+      queryClient.invalidateQueries();
+    } else {
+      toast({ title: "Failed to generate quests", variant: "destructive" });
+    }
   };
 
   const handleSideSubmit = (data: any) => {
