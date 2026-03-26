@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { 
+import {
   useGetDailyQuests, useCompleteDailyQuest, useGenerateDailyQuests,
   useGetSideQuests, useCompleteSideQuest, useCreateSideQuest,
-  useGetMainQuests, useCompleteMainQuest, useCreateMainQuest 
+  useGetMainQuests, useCompleteMainQuest, useCreateMainQuest
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -21,10 +21,15 @@ import {
 } from "@/components/ui/form";
 import { Scroll, CheckCircle2, Clock, Sword, Plus } from "lucide-react";
 import { STAT_ICONS } from "@/lib/xp";
+import { useToast } from "@/hooks/use-toast";
 
 export default function QuestsPage() {
   const queryClient = useQueryClient();
-  
+  const { toast } = useToast();
+
+  // Track which quest is currently being completed
+  const [completingId, setCompletingId] = useState<number | null>(null);
+
   // Daily Quests
   const { data: dailyQuests } = useGetDailyQuests();
   const completeDailyMutation = useCompleteDailyQuest();
@@ -132,12 +137,25 @@ export default function QuestsPage() {
                           COMPLETED
                         </div>
                       ) : (
-                        <Button 
-                          onClick={() => completeDailyMutation.mutate({ id: quest.id }, { onSuccess: () => queryClient.invalidateQueries() })}
-                          disabled={completeDailyMutation.isPending}
+                        <Button
+                          onClick={() => {
+                            setCompletingId(quest.id);
+                            completeDailyMutation.mutate({ id: quest.id }, {
+                              onSuccess: () => {
+                                setCompletingId(null);
+                                toast({ title: `Quest completed!`, description: `+${quest.xpReward} XP to ${quest.statReward}` });
+                                queryClient.invalidateQueries();
+                              },
+                              onError: (err) => {
+                                setCompletingId(null);
+                                toast({ title: "Quest completion failed", description: String(err), variant: "destructive" });
+                              },
+                            });
+                          }}
+                          disabled={completingId === quest.id}
                           className="w-full font-bold"
                         >
-                          Complete
+                          {completingId === quest.id ? "Completing..." : "Complete"}
                         </Button>
                       )}
                     </div>
