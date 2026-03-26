@@ -1,4 +1,4 @@
-const CACHE_NAME = 'maximus-rpg-v1';
+const CACHE_NAME = 'maximus-rpg-v2';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
